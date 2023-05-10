@@ -7,7 +7,7 @@
     - [x] `set.scm`
     - [x] `pair.scm`
     - [x] `stack.scm` (draft provided by professor)
-    - [ ] `queue.scm`
+    - [x] `queue.scm`
     - [ ] `table.scm`
     - [ ] `graph.scm`
     - [ ] ...
