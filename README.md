@@ -6,7 +6,7 @@
   - [ ] `basic-data-types`
     - [x] `set.scm`
     - [x] `pair.scm`
-    - [ ] `stack.scm`
+    - [x] `stack.scm` (draft provided by professor)
     - [ ] `queue.scm`
     - [ ] `table.scm`
     - [ ] `graph.scm`
