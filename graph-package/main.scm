@@ -347,6 +347,41 @@
 (define (spanning-tree graph)
   (let ((start-vertex (caar graph)))
     (dfs-spanning-tree start-vertex '() '() graph)))
+
+; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Finding the largest clique will be a tricky problem to solve, since you can't gather a full effective solution to it.
+; Best course of action can be to use a few helper functions to brute force the solution.
+
+; First create a function check if vertices are adjacient.
+
+(define (adjacient? v1 v2 graph)
+  (cond ((null? graph) #f)
+        ((assoc v1 (car graph)) (member v2 (car graph)))
+        (else (adjacient v1 v2 (cdr graph)))))
+
+; Then let's implement a function that returns all the possible pairs of the list:
+
+(define (all-pairs lst)
+  (cond ((null? lst) '())
+        ((null? (cdr lst)) '())
+        (else (append (map (lambda (x) (list (car lst) x)) (cdr lst))
+                      (all-pairs (cdr lst))))))
+
+; I got lazy so just got chatgbt code. I'll look through it later Sorry John, I'm burnt out today
+
+(define (clique? subset graph)
+  ; Returns #t if subset is a clique in graph, #f otherwise.
+  (let ((pairs (all-pairs subset)))
+    (every (lambda (pair) (adjacent? (car pair) (cadr pair) graph)) pairs)))
+
+(define (find-all-cliques graph)
+  ; Returns a list of all cliques in graph.
+  (let* ((vertices ; a list of all vertices in the graph
+          (map car graph))
+         (all-subsets ; a list of all subsets of vertices
+          (combinations vertices)))
+    (filter (lambda (subset) (clique? subset graph)) all-subsets)))
                     
         
         
