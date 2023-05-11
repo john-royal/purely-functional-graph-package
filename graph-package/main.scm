@@ -382,6 +382,40 @@
          (all-subsets ; a list of all subsets of vertices
           (combinations vertices)))
     (filter (lambda (subset) (clique? subset graph)) all-subsets)))
+
+; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Let's take a step back and create a weighted graph, this is where Dijasktra and Kruscal algorithm will come to shine.
+
+; A weighted graph essentially means that the edges are have a value set to them, so you can track the cost of going through edges.
+
+; Let's do a list type representation so, the weighted graph would look something like this: (1 ((2 10) (3 20))
+
+; First let's make an empty weighted graph
+
+(define (make-weighted-graph)
+  '())
+
+; Then let's recreated the function that adds the vertices to the graph
+
+(define (add-vertex-weighted graph vertex)
+  (if (assoc vertex graph)
+      graph
+      (cons (cons vertex '()) graph)))
+
+; Great the easy part is done, not we need to connect to the edges
+
+(define (add-weight-edge graph v1 v2 weight)
+  (letrec ((update-edge (lambda (graph v1 v2 weight)
+                          (if (null? graph)
+                              '()
+                              (let ((vertex (car graph)))
+                                (if (= (car vertex) v1)
+                                    (cons (cons (car vertex) (cons (list v2 weight) (cdr vertex)))
+                                          (cdr graph))
+                                    (cons vertex (update-edge (cdr graph) v1 v2 weight))))))))
+    (update-edge (update-edge graph v1 v2 weight) v2 v1 weight)))
+
                     
         
         
