@@ -325,6 +325,28 @@
 
 ; Now with this placed, we can create a way to find the spanning graph
 
+; Now with this placed, we can create a way to find the spanning graph
+; So originally I was going to use Kurskal's algorithm, but since for now we aren't working with a weighted graph, we can just use DFS
+; However, once we implement a weight graph, I can use it for brownie points
+
+; So from this, it would be easy to return a spanning tree then using DFS, we just have to modify the previous function a bit:
+
+(define (dfs-spanning-tree current visited tree graph)
+  (if (member current visited)
+      tree
+      (let ((neighbors (cdr (assoc current graph))))
+        (define (iter-tree nbrs)
+          (if (null? nbrs)
+              tree
+              (let ((nbr (car nbrs)))
+                (if (not (member nbr visited))
+                    (iter-tree (dfs-spanning-tree nbr (cons current visited) (cons (list current nbr) tree) graph))
+                    (iter-tree (cdr nbrs))))))
+        (iter-tree neighbors))))
+
+(define (spanning-tree graph)
+  (let ((start-vertex (caar graph)))
+    (dfs-spanning-tree start-vertex '() '() graph)))
                     
         
         
