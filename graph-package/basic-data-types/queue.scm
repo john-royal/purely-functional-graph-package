@@ -1,8 +1,5 @@
-; I have a feeling that the professor would prefer a procedural implementation of queues, considering his comments in `stack.scm`.
-; However, I couldn’t figure that out, so here’s a list-based implementation for now.
-; You know you love me.
-; x o x o
-; gossip squirrel
+; "Queues can be represented as stacks or lists"
+; "Do we care about time efficiency?" "Not so much"
 
 (define (make-empty-queue) '())
 
