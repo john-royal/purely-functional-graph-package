@@ -416,6 +416,90 @@
                                     (cons vertex (update-edge (cdr graph) v1 v2 weight))))))))
     (update-edge (update-edge graph v1 v2 weight) v2 v1 weight)))
 
+; --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Let's implement an unidrected graph
+
+; The difference between an undirected graph, and directed graph is that a directed graph, goes a specific path through the vertices, while that doesn't matter for
+; undirected graphs.
+
+; Implementing the function to add vertices, should be the same.
+
+(define (make-directed-graph)
+  '())
+
+
+(define (add-vertex-directed graph vertex)
+  (if (assoc vertex graph)
+      graph
+      (cons (cons vertex '()) graph)))
+
+; We have to just modify how the edge connects for the next function.
+
+(define (add-edge-directed graph v1 v2 weight)
+  (let ((entry1 (assoc v1 graph)))
+    (if entry1 (set-cdr! entry1 (cons (cons v2 weight) (cdr entry1))))
+    graph))
+
+; The modification was actually very easy to make, all I had to do was remove the lines of code in which v1 goes into v2, so that v2 goes into v1.
+
+; Now we have a directed graph
+
+(define directed-graph (make-directed-graph))
+
+(define directed-graph (add-vertex-directed graph 'A))
+(define directed-graph (add-vertex-directed graph 'B))
+(define directed-graph (add-vertex-directed graph 'C))
+(define directed-graph (add-vertex-directed graph 'D))
+
+(set! directed-graph (add-edge-directed graph 'A 'B 1))
+(set! directed-graph (add-edge-directed graph 'B 'C 1))
+(set! directed-graph (add-edge-directed graph 'C 'D 1))
+(set! directed-graph (add-edge-directed graph 'D 'A 1))
+
+;(display directed-graph)
+
+; -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Let's now try an implementation of topological sort
+
+; This will be a bit tricky, it seems, but essentially this sorting method, just follow a direct line of vertices connected by the edge
+; so like this A -> B -> C -> D
+
+; So first a graph can only be topological if it's acyclic, lucky for us we already have a function that does that, so we can check that off.
+; Next we can use DFS to help us out with this.
+; First we can create an empty stack to hold all the vertices that we sort
+; Then create a set to keep track of visited vertices
+; We want to go through adjacient vertices. and push the visited ones up to the stack
+; It will sort the order from top to bottom, if we can execute this right LOL.
+
+; First let's implement the DFS helper function we need
+; We need to slightlty modify the previous ones, not too much work for that
+
+(define (dfs-topo-sort current visited graph)
+  (if (member current visited)
+      visited
+      (let ((neighbors (cdr (assoc current graph))))
+        (define (iter-connect nbrs visited)
+          (if (null? nbrs)
+              (cons current visited)  ;; Add current node to visited after visiting all neighbors
+              (let ((nbr (car nbrs)))
+                (if (not (member nbr visited))
+                    (iter-connect nbrs (dfs-topo-sort nbr visited graph))  ;; Recursively visit neighbors
+                    (iter-connect (cdr nbrs) visited)))))
+        (iter-connect neighbors visited))))
+
+; Now that we have implemented DFS, let's create our main function
+
+(define (topological-sort graph) ; the graph is the input value
+  (let ((order '())) ; Create an empty stack to store the visited vertices
+    (letrec ((iter (lambda (vertices order) ; letrec helps us store a local function for iteration
+      (if (null? vertices) ; if we run out of vertices to check is returns us the visited vertices 
+          order
+          (iter (cdr vertices) ; if it's not empty it, it calls the local function again to go through the rest of the list, and dfs helps us store and adds the vertices to the order list
+                (dfs-topo-sort (car vertices order graph))))))
+             (reverse (iter (map car graph) '())))))) ; The map function helps us extract the list of vertices from the graph, and then we reverse the list so the vertices are in the front of the order
+
                     
         
         
