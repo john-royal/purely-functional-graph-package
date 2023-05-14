@@ -127,19 +127,23 @@
 (define graph (add-vertex graph 'B))
 (define graph (add-vertex graph 'C))
 
+; [So John this actually fulfills part 2.1 since I created an adjacient list representation]
+
 ; (display graph)
 
 ; It seems to work possiblly tweak the code so it doesn't reverse, but that's probably not an issue we have to care about
 
 ; Let's begin working on creating a function to add edges to our graph
 
-(define (add-edge graph v1 v2 weight)
-  (let ((entry1 (assoc v1 graph))
-        (entry2 (assoc v2 graph)))
-    (if entry1 (set-cdr! entry1 (cons (cons v2 weight) (cdr entry1))))
-    (if entry2 (set-cdr! entry2 (cons (cons v1 weight) (cdr entry2))))
-    graph))
-
+(define (add-edge graph v1 v2)
+  (define (update-vertex v w graph)
+    (map (lambda (entry)
+           (if (eq? v (car entry))
+               (cons v (cons w (cdr entry)))
+               entry))
+         graph))
+  (let ((graph (update-vertex v1 v2 graph)))
+    (update-vertex v2 v1 graph)))
 ;(display graph)
 
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -393,11 +397,12 @@
       (cons (cons vertex '()) graph)))
 
 ; We have to just modify how the edge connects for the next function.
-
-(define (add-edge-directed graph v1 v2 weight)
-  (let ((entry1 (assoc v1 graph)))
-    (if entry1 (set-cdr! entry1 (cons (cons v2 weight) (cdr entry1))))
-    graph))
+(define (add-edge-directed graph v1 v2)
+  (map (lambda (entry)
+         (if (eq? v1 (car entry))
+             (cons v1 (cons v2 (cdr entry)))
+             entry))
+       graph))
 
 ; The modification was actually very easy to make, all I had to do was remove the lines of code in which v1 goes into v2, so that v2 goes into v1.
 
@@ -405,15 +410,19 @@
 
 (define directed-graph (make-directed-graph))
 
-(define directed-graph (add-vertex-directed graph 'A))
-(define directed-graph (add-vertex-directed graph 'B))
-(define directed-graph (add-vertex-directed graph 'C))
-(define directed-graph (add-vertex-directed graph 'D))
+(define directed-graph (add-vertex-directed directed-graph 'A))
+(define directed-graph (add-vertex-directed directed-graph 'B))
+(define directed-graph (add-vertex-directed directed-graph 'C))
 
-(set! directed-graph (add-edge-directed graph 'A 'B 1))
-(set! directed-graph (add-edge-directed graph 'B 'C 1))
-(set! directed-graph (add-edge-directed graph 'C 'D 1))
-(set! directed-graph (add-edge-directed graph 'D 'A 1))
+(define directed-graph (add-edge-directed directed-graph 'A 'B))
+(define directed-graph (add-edge-directed directed-graph 'B 'C))
+(define directed-graph (add-edge-directed directed-graph 'A 'C))
+
+
+(display directed-graph)
+
+(newline)
+(newline)
 
 ;(display directed-graph)
 
