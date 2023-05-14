@@ -519,6 +519,172 @@
           (iter (cdr vertices) ; if it's not empty it, it calls the local function again to go through the rest of the list, and dfs helps us store and adds the vertices to the order list
                 (dfs-topo-sort (car vertices order graph))))))
              (reverse (iter (map car graph) '())))))) ; The map function helps us extract the list of vertices from the graph, and then we reverse the list so the vertices are in the front of the order
+; -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Let's take a look at weighted graphs again
+
+; Recall from before I was talking about Kruscal's algorithm to find a spanning tree, but since my graph wasn't weighted, it was overkill so I used DFS?
+; Now that we have a weight graph, it would be cool to use Kruscal's now.
+; It's a greedy method, meaning it finds the minimum spanning tree
+
+; First as I said earlier a spanning tree can't have cycles.
+; We have to take it mind, that it will connect all edges that have the list weight, that's what makes this algorithm powerful
+
+; The conceptual view is that first we sort all the edges from the grpah in non-decreasing order of their weights
+; Then start adding edges to the minimum spanning tree. If adding an edge creates a cycle, then do not add an edge.
+; Continue this untill you have a spanning tree, which means all vertices are connected and there are no cycles.
+
+; First we have use the is-acyclic function again to most likely make a check if adding a specific edge causes a cycle.
+; We probably need a stack that is empty that we add the sorted edges to
+; Possibly another empty stack, that we start adding the minimum spanning tree to
+; Obviosuly this will have to be done recursively
+
+; So doing this will have a lot of steps, which actually is beneficial for us John, it can earn us a lot of brownie points.
+
+; First let's create a function that sorts the edges.
+; First we can extract the edges by using map.
+
+; Let's first sort the edges --- John this may not be optimal, we can see if we should change this
+
+;(define (sort-edge edge)
+;  (if (< (cadr edge) (car edge))
+ ;    (list (cadr edge) (car edge) (caddr edge))
+ ;     edge))
+; ---> This implementation didn't work so I'm using for now a chatgbt code --> should be changes later on
+
+; okay so turns out using the sorting implementation isn't working out, I gotta change the weighted graph then
+
+;(define (insert-in-order new-edge edge-list)
+ ; (if (or (not (list? new-edge)) 
+        ;  (< (length new-edge) 3) 
+         ; (null? edge-list)
+          ;(not (list? (car edge-list))) 
+          ;(< (length (car edge-list)) 3))
+      ;(error "Invalid edge or edge list")
+      ;(if (< (caddr new-edge) (caddr (car edge-list)))
+        ;  (cons new-edge edge-list)
+          ;(cons (car edge-list) (insert-in-order new-edge (cdr edge-list))))))
+
+
+;(define (sort-edges edge-list)
+  ;(if (null? edge-list)
+   ;   '()
+     ; (insert-in-order (car edge-list) (sort-edges (cdr edge-list)))))
+
+(define (extract-edges graph)
+  (if (null? graph)
+      '()
+      (let ((vertex (caar graph))
+            (edges (cdar graph)))
+        (append (map (lambda (edge) (list vertex (car edge) (cadr edge))) edges)
+                (extract-edges (cdr graph))))))
+(define (insert-in-order new-edge edge-list)
+  (cond ((null? edge-list) (list new-edge))
+        ((not (and (list? new-edge) (>= (length new-edge) 3))) 
+         (display "Invalid edge") '())
+        ((not (and (list? (car edge-list)) (>= (length (car edge-list)) 3))) 
+         (display "Invalid edge list") '())
+        ((< (caddr new-edge) (caddr (car edge-list))) 
+         (cons new-edge edge-list))
+        (else (cons (car edge-list) (insert-in-order new-edge (cdr edge-list))))))
+
+(define (sort-edges edge-list)
+  (if (null? edge-list)
+      '()
+      (insert-in-order (car edge-list) (sort-edges (cdr edge-list)))))
+
+
+  (define weighted-graph (make-weighted-graph))
+  ; Add vertices
+  (set! weighted-graph (add-vertex-weighted weighted-graph 'A))
+  (set! weighted-graph (add-vertex-weighted weighted-graph 'B))
+  (set! weighted-graph (add-vertex-weighted weighted-graph 'C))
+  ; Add edges
+  (set! weighted-graph (add-weight-edge weighted-graph 'A 'B 3))
+  (set! weighted-graph (add-weight-edge weighted-graph 'A 'C 2))
+  (set! weighted-graph (add-weight-edge weighted-graph 'B 'C 1))
+
+  (display "Graph: ")
+  (display weighted-graph)
+  (newline)
+
+  (define extracted-edges (extract-edges weighted-graph))
+  (display "Extracted Edges: ")
+  (display extracted-edges)
+  (newline)
+
+  (define sorted-edges (sort-edges extracted-edges))
+  (display "Sorted Edges: ")
+  (display sorted-edges)
+  (newline)
+
+; Okay this part was extremely hard to do, my implementation didn't work so I just after many specification updates got chatgbt to write it.
+
+; Now we gotta disjoint, which is a bit hard to grasp, but let me try to explain it the best I can.
+
+; So first we want to make the vertices into sets, so we can split all the vertices out, so they can be their own sets
+; The implementation of this:
+
+(define (make-set vertices)
+  (map (lambda (vertex) (cons vertex vertex)) vertices))
+
+; This assigns a vertice to it's own set, as well as making the vertex it's own parent for now.
+; Now this is where it gets confusing --> I had to make chatgbt use a lego block analogy and then a classroom analogy to make me understand it
+; So we need to implement a find function that finds the parent of the vertex, this means that we have keep asking a vertex where it comes from, and goes down until one identifies itself as the parent
+
+(define (find set x)
+  (if (eq? x (cdr (assoc x set))) ; This checks if x is it's own parent // if it is then you return x, because it's at the top of the tree
+      x
+      (find set (cdr (assoc x set))))) ; Otherwise we go through the program again, with the current disjoint strucutre and repeat the process until we find the parent
+  
+; Now we need to implement the union for this, which is slighlty less confusing
+; So we have sets right now, with each vertex being it's own parent, but let's say for set A, we want to implement it so it becomes the parent for set B.
+; It basically combines two sets to each other
+; Then we use the find function to find the parents of each of these new sets
+
+(define (union set v1 v2)
+  (let ((x (find set v1)) (y (find set v2))) ; This defines the two sets with have to join together
+    (if (not (eq? x y)) ; This checks if x and y set aren't equal 
+        (map (lambda (pair) ; If they aren't we use map and a lambda function
+               (if (eq? (cdr pair) y) ; This if the second set is in the parent set
+                   (cons (car pair) x) ; if it is, it combines and creates a new set where x is the parent of y
+                   pair))
+             set)
+        set)))
+; Oh lord finally implemented all the data structures for this, my brain is fried from this, honestly probably the hardest part of the project I've done so far
+
+; Bro after all the work, Ima just use chatbpt code, I'll change it later, but let's just see if it works meaning I implemented the data structures correctly
+
+(define (kruskal graph)
+  (let ((sorted-edges (sort-edges (extract-edges graph)))
+        (disjoint-set (make-set (extract-vertices graph)))
+        (result '()))
+    (define (kruskal-helper edges)
+      (if (null? edges)
+          result
+          (let* ((edge (car edges))
+                 (v1 (car edge))
+                 (v2 (cadr edge)))
+            (let ((v1-root (find disjoint-set v1))
+                  (v2-root (find disjoint-set v2)))
+              (if (eq? v1-root v2-root)
+                  (kruskal-helper (cdr edges))
+                  (begin (set! result (cons edge result))
+                         (set! disjoint-set (union disjoint-set v1 v2))
+                         (kruskal-helper (cdr edges))))))))
+    (kruskal-helper sorted-edges)))
+
+(define (extract-vertices graph)
+  (if (null? graph)
+      '()
+      (cons (caar graph) (extract-vertices (cdr graph)))))
+
+(define result (kruskal weighted-graph))
+(display "Minimum spanning tree: ")
+(display result)
+(newline)
+
+; Alot of changes were made in the weight graph code, but at least now after modifying the chatgpt function I got it to work
 
                     
         
