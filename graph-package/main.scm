@@ -180,69 +180,7 @@
 (define (graph-connection v1 v2 graph)
   (dfs v1 v2 graph '()))
 
-; Let's implement Dijsktra algorithm, which will help us find the shortest path between V1 and V2, it's based on the Greedy Method
-; If (d[u] + c(u,v) < d[v])
-;       d[v] = d[u] + c(u,v)
-; This means that if a shorter distance is found than the current distance we will replace it
 
-; We need the starter vertex, V1
-; Look for direct edges first, and the ones that arent label them as infitiy
-; Find the shortest direct edge distance, and once that is found, conduct the equation I added above
-; Keep doing this and modify as it goes
-
-; This is a custom fold program to use
-(define (my-foldl func initial-value lst)
-  (if (null? lst)
-      initial-value
-      (my-foldl func (func (car lst) initial-value) (cdr lst))))
-
-(define (find-min-distance-node distances visited)
-  (my-foldl
-    (lambda (entry min-entry)
-      (if (and (not (member (car entry) visited)) (< (cdr entry) (cdr min-entry)))
-          entry
-          min-entry))
-    (cons (car distances) +inf.0)
-    distances))
-
-(define (dijkstra graph start end)
-  (define (update-distances-iter current-distance neighbors)
-    (if (null? neighbors)
-        #t
-        (let* ((nbr (car neighbors))
-               (nbr-node (car nbr))
-               (nbr-dist (+ current-distance (cdr nbr)))
-               (entry (assoc nbr-node distances)))
-          (if (and (< nbr-dist (cdr entry)) (not (member nbr-node visited)))
-              (set-cdr! entry nbr-dist)
-              #f)
-          (update-distances-iter current-distance (cdr neighbors)))))
-
-  (define (dijkstra-helper visited distances)
-    (let* ((current-node (car (find-min-distance-node distances visited)))
-           (current-distance (cdr (assoc current-node distances))))
-      (if (or (null? current-node) (eq? current-node end))
-          current-distance
-          (begin
-            (set! visited (cons current-node visited))
-            (update-distances-iter current-distance (cdr (assoc current-node graph)))
-            (dijkstra-helper visited distances)))))
-
-  (let ((visited '())
-        (distances (map (lambda (v) (cons (car v) (if (eq? (car v) start) 0 +inf.0))) graph)))
-    (dijkstra-helper visited distances)))
-; Test code
-(define graph (make-graph))
-(define graph (add-vertex graph 'A))
-(define graph (add-vertex graph 'B))
-(define graph (add-vertex graph 'C))
-(define graph (add-edge graph 'A 'B 1))
-(define graph (add-edge graph 'A 'C 3))
-(define graph (add-edge graph 'B 'C 2))
-
-;(display (dijkstra graph 'A 'C)) ; Output: 3
-
-; [Side Not John, this doesn't work, it's chatgbt code, I'm sorry I couldn't find the energy to implement it myself, so can you? I cant provide a conceptual view on it for you!]
 
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
