@@ -410,11 +410,31 @@
                           (if (null? graph)
                               '()
                               (let ((vertex (car graph)))
-                                (if (= (car vertex) v1)
+                                (if (eq? (car vertex) v1)
                                     (cons (cons (car vertex) (cons (list v2 weight) (cdr vertex)))
                                           (cdr graph))
                                     (cons vertex (update-edge (cdr graph) v1 v2 weight))))))))
-    (update-edge (update-edge graph v1 v2 weight) v2 v1 weight)))
+    (if (string<? (symbol->string v1) (symbol->string v2))
+        (update-edge graph v1 v2 weight)
+        (update-edge graph v2 v1 weight))))
+; the problem with this is that idk if we can use String<? 
+
+;(define weighted-graph (make-weighted-graph))
+; Add vertices
+;(define weighted-graph (add-vertex-weighted weighted-graph 'A))
+;(define weighted-graph (add-vertex-weighted weighted-graph 'B))
+;(define weighted-graph (add-vertex-weighted weighted-graph 'C))
+;(define weighted-graph (add-vertex-weighted weighted-graph 'D))
+;(define weighted-graph (add-vertex-weighted weighted-graph 'E))
+; Add edges
+;(define weighted-graph (add-weight-edge weighted-graph 'A 'B 1))
+;(define weighted-graph (add-weight-edge weighted-graph 'A 'C 3));
+;(define weighted-graph (add-weight-edge weighted-graph 'B 'C 4))
+;(define weighted-graph (add-weight-edge weighted-graph 'E 'C 6))
+;(define weighted-graph (add-weight-edge weighted-graph 'D 'E 2))
+;(define weighted-graph (add-weight-edge weighted-graph 'E 'A 3))
+;Display
+;(display weighted-graph)
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
