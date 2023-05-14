@@ -633,6 +633,38 @@
 
 ; Alot of changes were made in the weight graph code, but at least now after modifying the chatgpt function I got it to work
 
+; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------\
+
+; Lastly lets created a labeled undirected graph, which may be the easiest thing I've done in the last few days.
+
+; So first make an empty graph:
+
+(newline)
+(newline)
+(newline)
+
+(define (make-label-undirect-graph)
+  '())
+
+; Now add the vertices
+(define (add-vertex-label graph vertex)
+  (if (assoc vertex graph)
+      graph
+      (cons (cons vertex '()) graph)))
+(define graph (make-graph))
+
+; Okay now we add the edges, we can just add another input that is for labels
+
+(define (add-edge graph v1 v2 label)
+  (define (update-vertex v w l graph)
+    (map (lambda (entry)
+           (if (eq? v (car entry))
+               (cons v (cons (list w l) (cdr entry)))
+               entry))
+         graph))
+  (let ((graph (update-vertex v1 v2 label graph)))
+    (update-vertex v2 v1 label graph)))
+
                     
         
         
