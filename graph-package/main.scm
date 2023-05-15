@@ -157,16 +157,29 @@
 ; So if we want to see if there's a connection between two vertices, we essentially can just spearate the sublists and check if two vertices are in the sublist, that should prove a
 ; connection or not.
 
-(define (graph-connection v1 v2 graph)
-  (cond ((null? graph) #f)
-        ((and (member v1 (car graph)) (member v2 (car graph))) #t)
-        (else (graph-connection v1 v2 (cdr graph)))))
+;(define (graph-connection v1 v2 graph)
+  ;(cond ((null? graph) #f)
+     ;   ((and (member v1 (car graph)) (member v2 (car graph))) #t)
+      ;  (else (graph-connection v1 v2 (cdr graph)))))
 
-(define graph (graph-connection 'a 'b graph))
+;(define graph (graph-connection 'a 'b graph))
 
 ; According to chatgbt, this code wouldn't work --- which is very unfortunate, guess we gotta use DFS
 
 ; I used a lot of chatgbt for this, but I got a pretty good understanding for it.
+
+; Design Idea
+; So we are trying to find if there is a connection between two vertices of the graph.
+; The best approach we gathered is using Depth-First Search (DFS)
+; DFS will be used for 4 parameters, the two vertices, the graph we are using, and an empty list that is used to keep track of vertices visited
+; the first vertex will act as the current vertex, and we have to find v2, which is the target vertex
+; if v1 and v2 are the same that means that we have found the target vertex, so the the program would stop and prove there's a graph connection
+; else, we have to go through the neighbor vertices of v1, which we can use the assoc function to find all the vertices associated with v1
+; To iterate through all these vertices, we can use iteration
+; if there are no neighbors in the associate list, there is no connection, so it's false
+; if not, we scan through the list
+; If the current vertex in the iteration isn't in the visited list, we add it into visited
+; This continues until the target vertex is found, and once that is, the program immeditately returns true
 
 (define (dfs v1 v2 graph visited)
   (if (eq? v1 v2)
@@ -184,6 +197,14 @@
 (define (graph-connection v1 v2 graph)
   (dfs v1 v2 graph '()))
 
+; Proof
+; The point of DFS is to visit all the 'reachable' vertices from the starting vertex (v1)
+; Also no vertex is visited more than once
+; Base Case: if the current vertex is the same as the target vertex, then the algorithm proves true
+; Inductive Step: We need to show that if the property holds for n, it has to also hold for n + 1
+; If we need to find n + 1, we can assum that DFS will find a path from v1 to n + 1 by recursively searching neighors until n + 1 is found
+; If n + 1 isn't in the same path as v1, it will search through the list until there is no more paths to go through
+
 
 
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -196,6 +217,18 @@
 
 ; Okay let's try modifying the DFS model, so we want to see if there is an edge with one vertex
 ; We can set parameters graph, and visited. 
+
+;Design Idea
+; So we want to check if the graph has any cycles or not, for simplicity we went with DFS again
+; first we need to identify what a cycle would mean, if the current vertex we have found is also already visited
+; That means there's a cycle, unless the current vertex is also it's own parent
+; We can create a local function, loop that takes the start of the current vertex, and finds all it's edges in the graph
+; First in the loop we check if the current neighbor has any edges, if it doesn't, that means there are no cycles
+; else it takes the first element of neighbors and checks if it's not equal to the parent vertex
+; if it's not then we recursively call the function switching the current vertex to the next
+; and adding the previous current vertex to the visited list
+; if in the next recursion, it's true the program returns true, if not, we go through the loop function again, until it goes through all the edges.
+; Essentially it returns true if the function has a cycle.
 
 (define (dfs-acyclic current_vertex parent graph visited)
   (if (member current_vertex visited)
@@ -214,7 +247,15 @@
 
 (define (is-acyclic graph)
   (let ((starting_vertex (caar graph))) (dfs-acyclic starting_vertex #f graph '())))
- ; the parent input is used to identify back edges since an undirected graph doesn't follow a specifc direction
+  ; the parent input is used to identify back edges since an undirected graph doesn't follow a specifc direction
+
+; Proof
+; General Invariant:
+; At any point during the DFS program, a vertex in the visited list if an only if all paths from the starting vertex have been explored
+; No vertex is visited more than once, because the prgoram checks before the iterative recall if the vertex has been added
+; to the visited list
+; All vertices that can be reached are eventually visited, since we added a vertex to the visited list as soon as we begin exploring
+; it, and we xplore all neighbors of each vertex, we can make the assumption that we visit alll the vertices reachable from the starting vertex
     
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -228,10 +269,15 @@
 
 ; the function can be to comapre if the graph is connected and doesn't have loops. Let's back track and and create a function to check if the graph is connected
 
-; To start on finding if the graph is connected, I'm gonna implement, I'm going to use a helper function that lets me know how many vertices are in the graph.
-(define (number-of-vertices graph)
-  (length graph))
-; The point of this is to compare the number of vertices in the graph vs the completed vertices of the visted graphs
+; Complete Design Idea
+
+; So we want to check if the graph is connected, which means that all the vertices are connected through one parent vertex
+; Honestly from all we've done so far this isn't diffuclt, we essentially can just run DFS, and calculate from this
+; We'll reimplement DFS, and then a helper function that checks the number of vertices in the graph
+; The point of that is to compare the visited elements of DFS with how many vertices there are in the graph
+; Then we create a function connect? that essentially started DFS on the first vertex.
+; Once that is done, it compares the visted vertices from DFS to the number of vertices in the graph
+; If the number of vertices are the same, we have a connected graph!
 
 (define (dfs-connected current visited graph)
   (if (member current visited)
