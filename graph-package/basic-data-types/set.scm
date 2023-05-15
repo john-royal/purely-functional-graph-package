@@ -42,7 +42,7 @@
 
 ; (set-union '(1 2 3 4) '(3 4 5 6)) ; (1 2 3 4 5 6)
 
-;; Alternate set implementations that the professor showed in class.
+;; Alternate set implementations that were shown in class.
 ;; Couldn’t get them to work, but keeping them here for now in case we want to try.
 
 ;(define (set-union A B)
@@ -50,8 +50,6 @@
 ;  (cond ((null? set1) set2)
 ;       ((set-member? (car set1) set2) (aux (cdr set1)))
 ;      (else (cons (car set1) (aux (cdr set1)))))))
-
-;; Around here, the professor went on a tangent ending with “ecosystem collapses horribly and we die terribly, but whatever...”
 
 ;(define (set-union set1 set2)
 ;  (letrec ((aux (lambda x) (cond ((null? x) set2)

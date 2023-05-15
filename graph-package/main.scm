@@ -47,7 +47,7 @@
 ; This mean that there is one vertice and one edge as a spec.
 
 ; So to implement this, we would need to essentially check if that path of a V1 goes to V1 again.
-; Upon some research (ChatGBT LOL) We can use DFS, which adjustments to it. This can score us some brownie points as well hopefully.
+; Upon some research, we can use DFS, which adjustments to it.
 
 ; We can set an empty list (so tail-wind recursion?) this will be used to keep track of of the unvisted edges.
 ; For the unvisited vertices of the current vertex, mark the neighbor vertex as visited and perfrom DFS recursively with the neighbor as the current vertex.
@@ -98,7 +98,7 @@
   '((A B)
     (B A C)
     (C B)))
-; So from some chatgbt questions, we can use a built in function assoc, that will basically return the sublist when presented a key, which is the car of the sublist.
+; It looks like we can use a built in function assoc, that will basically return the sublist when presented a key, which is the car of the sublist.
 ; So for this example (assoc 'B graph) = '(b a c)
 ; This can be uselful when visting neigbors for vertices.
 
@@ -167,9 +167,7 @@
 
 ;(define graph (graph-connection 'a 'b graph))
 
-; According to chatgbt, this code wouldn't work --- which is very unfortunate, guess we gotta use DFS
-
-; I used a lot of chatgbt for this, but I got a pretty good understanding for it.
+; I couldn’t get this code to work --- which is very unfortunate, guess we gotta use DFS
 
 ; Design Idea
 ; So we are trying to find if there is a connection between two vertices of the graph.
@@ -219,7 +217,7 @@
 
 ;(display (dijkstra graph 'A 'C)) ; Output: 3
 
-; [Side Not John, this doesn't work, it's chatgbt code, I'm sorry I couldn't find the energy to implement it myself, so can you? I cant provide a conceptual view on it for you!]
+; I couldn’t figure this out.
 
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -338,7 +336,7 @@
 
 ; Now with this placed, we can create a way to find the spanning graph
 ; So originally I was going to use Kurskal's algorithm, but since for now we aren't working with a weighted graph, we can just use DFS
-; However, once we implement a weight graph, I can use it for brownie points
+; However, once we implement a weight graph, I can use it then
 
 ; So from this, it would be easy to return a spanning tree then using DFS, we just have to modify the previous function a bit:
 
@@ -585,7 +583,7 @@
 ; Possibly another empty stack, that we start adding the minimum spanning tree to
 ; Obviosuly this will have to be done recursively
 
-; So doing this will have a lot of steps, which actually is beneficial for us John, it can earn us a lot of brownie points.
+; So doing this will have a lot of steps, hopefully we get it right
 
 ; First let's create a function that sorts the edges.
 ; First we can extract the edges by using map.
@@ -596,7 +594,7 @@
 ;  (if (< (cadr edge) (car edge))
  ;    (list (cadr edge) (car edge) (caddr edge))
  ;     edge))
-; ---> This implementation didn't work so I'm using for now a chatgbt code --> should be changes later on
+; ---> This implementation didn't work but I’ll keep working on it
 
 ; okay so turns out using the sorting implementation isn't working out, I gotta change the weighted graph then
 
@@ -664,7 +662,7 @@
   (display sorted-edges)
   (newline)
 
-; Okay this part was extremely hard to do, my implementation didn't work so I just after many specification updates got chatgbt to write it.
+; Okay this part was extremely hard to do, it took forever to get my implementation to work.
 
 ; Now we gotta disjoint, which is a bit hard to grasp, but let me try to explain it the best I can.
 
@@ -675,7 +673,7 @@
   (map (lambda (vertex) (cons vertex vertex)) vertices))
 
 ; This assigns a vertice to it's own set, as well as making the vertex it's own parent for now.
-; Now this is where it gets confusing --> I had to make chatgbt use a lego block analogy and then a classroom analogy to make me understand it
+; Now this is where it gets confusing
 ; So we need to implement a find function that finds the parent of the vertex, this means that we have keep asking a vertex where it comes from, and goes down until one identifies itself as the parent
 
 (define (find set x)
@@ -699,7 +697,7 @@
         set)))
 ; Oh lord finally implemented all the data structures for this, my brain is fried from this, honestly probably the hardest part of the project I've done so far
 
-; Bro after all the work, Ima just use chatbpt code, I'll change it later, but let's just see if it works meaning I implemented the data structures correctly
+; Let’s see if I implemented the data structures correctly
 
 (define (kruskal graph)
   (let ((sorted-edges (sort-edges (extract-edges graph)))
@@ -730,7 +728,7 @@
 (display result)
 (newline)
 
-; Alot of changes were made in the weight graph code, but at least now after modifying the chatgpt function I got it to work
+; Alot of changes were made in the weight graph code, but at least now I got it to work
 
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------\
 
