@@ -127,8 +127,6 @@
 (define graph (add-vertex graph 'B))
 (define graph (add-vertex graph 'C))
 
-; [So John this actually fulfills part 2.1 since I created an adjacient list representation]
-
 ; (display graph)
 
 ; It seems to work possiblly tweak the code so it doesn't reverse, but that's probably not an issue we have to care about
@@ -144,6 +142,11 @@
          graph))
   (let ((graph (update-vertex v1 v2 graph)))
     (update-vertex v2 v1 graph)))
+
+(define graph (add-edge graph 'A 'B))
+(define graph (add-edge graph 'B 'C))
+(define graph (add-edge graph 'A 'C))
+
 ;(display graph)
 
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -158,9 +161,9 @@
 ; connection or not.
 
 ;(define (graph-connection v1 v2 graph)
-  ;(cond ((null? graph) #f)
-     ;   ((and (member v1 (car graph)) (member v2 (car graph))) #t)
-      ;  (else (graph-connection v1 v2 (cdr graph)))))
+;  (cond ((null? graph) #f)
+;        ((and (member v1 (car graph)) (member v2 (car graph))) #t)
+  ;      (else (graph-connection v1 v2 (cdr graph)))))
 
 ;(define graph (graph-connection 'a 'b graph))
 
@@ -205,7 +208,18 @@
 ; If we need to find n + 1, we can assum that DFS will find a path from v1 to n + 1 by recursively searching neighors until n + 1 is found
 ; If n + 1 isn't in the same path as v1, it will search through the list until there is no more paths to go through
 
+; Test code
+;(define graph (make-graph))
+;(define graph (add-vertex graph 'A))
+;(define graph (add-vertex graph 'B))
+;(define graph (add-vertex graph 'C))
+;(define graph (add-edge graph 'A 'B 1))
+;(define graph (add-edge graph 'A 'C 3))
+;(define graph (add-edge graph 'B 'C 2))
 
+;(display (dijkstra graph 'A 'C)) ; Output: 3
+
+; [Side Not John, this doesn't work, it's chatgbt code, I'm sorry I couldn't find the energy to implement it myself, so can you? I cant provide a conceptual view on it for you!]
 
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -216,7 +230,7 @@
 ; Sounds easy enough or is it? LOL
 
 ; Okay let's try modifying the DFS model, so we want to see if there is an edge with one vertex
-; We can set parameters graph, and visited. 
+; We can set parameters graph, and visited.
 
 ;Design Idea
 ; So we want to check if the graph has any cycles or not, for simplicity we went with DFS again
@@ -247,7 +261,7 @@
 
 (define (is-acyclic graph)
   (let ((starting_vertex (caar graph))) (dfs-acyclic starting_vertex #f graph '())))
-  ; the parent input is used to identify back edges since an undirected graph doesn't follow a specifc direction
+ ; the parent input is used to identify back edges since an undirected graph doesn't follow a specifc direction
 
 ; Proof
 ; General Invariant:
@@ -269,6 +283,8 @@
 
 ; the function can be to comapre if the graph is connected and doesn't have loops. Let's back track and and create a function to check if the graph is connected
 
+; To start on finding if the graph is connected, I'm gonna implement, I'm going to use a helper function that lets me know how many vertices are in the graph.
+
 ; Complete Design Idea
 
 ; So we want to check if the graph is connected, which means that all the vertices are connected through one parent vertex
@@ -278,6 +294,8 @@
 ; Then we create a function connect? that essentially started DFS on the first vertex.
 ; Once that is done, it compares the visted vertices from DFS to the number of vertices in the graph
 ; If the number of vertices are the same, we have a connected graph!
+
+
 
 (define (dfs-connected current visited graph)
   (if (member current visited)
@@ -295,11 +313,16 @@
 
 (define (number-of-vertices graph)
   (length graph))
+; The point of this is to compare the number of vertices in the graph vs the completed vertices of the visted graphs
 
 (define (connected? graph)
   (let* ((start-vertex (caar graph))
          (visited (dfs-connected start-vertex '() graph)))
     (= (number-of-vertices graph) (length visited))))
+
+; Proof
+
+
 
 ; So i just realized I'm continously creating DFS function, when I don't have to, realized how stupid this is. I can fix it eventually for the final product, so please bear with me
 ; for now John lol
@@ -356,20 +379,45 @@
         (else (append (map (lambda (x) (list (car lst) x)) (cdr lst))
                       (all-pairs (cdr lst))))))
 
-; I got lazy so just got chatgbt code. I'll look through it later Sorry John, I'm burnt out today
+; Then let's find all possible subsets for the unidrected graph
 
-(define (clique? subset graph)
-  ; Returns #t if subset is a clique in graph, #f otherwise.
-  (let ((pairs (all-pairs subset)))
-    (every (lambda (pair) (adjacent? (car pair) (cadr pair) graph)) pairs)))
+(define (subsets s)
+  (if (null? s)
+      (list '())
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (x) (cons (car s) x)) rest)))))
 
-(define (find-all-cliques graph)
-  ; Returns a list of all cliques in graph.
-  (let* ((vertices ; a list of all vertices in the graph
-          (map car graph))
-         (all-subsets ; a list of all subsets of vertices
-          (combinations vertices)))
-    (filter (lambda (subset) (clique? subset graph)) all-subsets)))
+; Next let's find the cliques for the graph
+
+(define (all? pred lst)
+  (cond ((null? lst) #t)
+        ((pred (car lst)) (all? pred (cdr lst)))
+        (else #f)))
+
+(define (clique? vertices graph)
+  (let ((pairs (all-pairs vertices)))
+    (all? (lambda (pair) (adjacient? (car pair) (cadr pair) graph)) pairs)))
+
+(define (all-cliques graph)
+  (let* ((vertices (map car graph))
+         (vertex-subsets (subsets vertices)))
+    (filter (lambda (subset) (clique? subset graph)) vertex-subsets)))
+
+; Now we find the largest clique by comparing all the cliques and finding which sublist has the most vertices
+
+(define (largest l)
+  (if (null? l)
+      '()
+      (let ((rest-largest (largest (cdr l))))
+        (if (> (length (car l)) (length rest-largest))
+            (car l)
+            rest-largest))))
+
+(define (largest-clique graph)
+  (let ((cliques (all-cliques graph)))
+    (largest cliques)))
+
+
 
 ; ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -424,9 +472,10 @@
 ;Display
 ;(display weighted-graph)
 
+
 ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-; Let's implement an unidrected graph
+; Let's implement an directed graph
 
 ; The difference between an undirected graph, and directed graph is that a directed graph, goes a specific path through the vertices, while that doesn't matter for
 ; undirected graphs.
@@ -441,8 +490,10 @@
   (if (assoc vertex graph)
       graph
       (cons (cons vertex '()) graph)))
+(define graph (make-directed-graph))
 
 ; We have to just modify how the edge connects for the next function.
+
 (define (add-edge-directed graph v1 v2)
   (map (lambda (entry)
          (if (eq? v1 (car entry))
@@ -470,7 +521,6 @@
 (newline)
 (newline)
 
-;(display directed-graph)
 
 ; -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -488,7 +538,6 @@
 
 ; First let's implement the DFS helper function we need
 ; We need to slightlty modify the previous ones, not too much work for that
-
 (define (dfs-topo-sort current visited graph)
   (if (member current visited)
       visited
@@ -498,7 +547,7 @@
               (cons current visited)  ;; Add current node to visited after visiting all neighbors
               (let ((nbr (car nbrs)))
                 (if (not (member nbr visited))
-                    (iter-connect nbrs (dfs-topo-sort nbr visited graph))  ;; Recursively visit neighbors
+                    (iter-connect (cdr nbrs) (dfs-topo-sort nbr (cons current visited) graph))  ;; Recursively visit neighbors
                     (iter-connect (cdr nbrs) visited)))))
         (iter-connect neighbors visited))))
 
@@ -510,8 +559,12 @@
       (if (null? vertices) ; if we run out of vertices to check is returns us the visited vertices 
           order
           (iter (cdr vertices) ; if it's not empty it, it calls the local function again to go through the rest of the list, and dfs helps us store and adds the vertices to the order list
-                (dfs-topo-sort (car vertices order graph))))))
-             (reverse (iter (map car graph) '())))))) ; The map function helps us extract the list of vertices from the graph, and then we reverse the list so the vertices are in the front of the order
+                (dfs-topo-sort (car vertices) order graph))))))
+             (reverse (iter (map car graph) '()))))) ; The map function helps us extract the list of vertices from the graph, and then we reverse the list so the vertices are in the front of the order
+
+          
+    
+
 ; -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ; Let's take a look at weighted graphs again
@@ -710,6 +763,7 @@
          graph))
   (let ((graph (update-vertex v1 v2 label graph)))
     (update-vertex v2 v1 label graph)))
+
 
                     
         
