@@ -15,13 +15,15 @@
         (else (cons (car graph) (remove-node (cdr graph) node)))))
 
 (define (add-edge graph node1 node2)
-  (if (null? graph) '()
+  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
+      graph
       (let* ((entry (car graph))
              (node (first entry))
              (neighbors (second entry)))
         (if (equal? node node1)
             (cons (pair node (set-insert node2 neighbors)) (cdr graph))
             (cons entry (add-edge (cdr graph) node1 node2))))))
+
 
 (define (remove-edge graph node1 node2)
   (if (null? graph) '()
@@ -33,12 +35,17 @@
             (cons entry (remove-edge (cdr graph) node1 node2))))))
 
 (define (neighbors graph node)
-  (second (assoc node graph)))
+  (let ((node-assoc (assoc node graph)))
+    (if node-assoc
+        (second node-assoc)
+        '())))
 
 (define (adjacent? graph node1 node2)
-  (let ((n (neighbors graph node1)))
-    (if (null? n) #f
+  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
+      #f
+      (let ((n (neighbors graph node1)))
         (set-member? node2 n))))
+
 
 (define (nodes graph)
   (map car graph))
@@ -64,9 +71,9 @@
 (nodes g)
 (edges g)
 (neighbors g 'A)
-;(adjacent? g 'A 'B)
-;(adjacent? g 'B 'A)
-;(adjacent? g 'D 'A)
+(adjacent? g 'A 'B)
+(adjacent? g 'B 'A)
+(adjacent? g 'D 'A)
 (define g (remove-edge g 'A 'B))
-(display g)
+;(display g)
 (newline)
