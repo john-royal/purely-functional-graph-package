@@ -50,6 +50,9 @@
              (connected-nodes (second entry)))
         (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
 
+(define (number-of-nodes graph)
+  (length (nodes graph)))
+
 (define g (make-empty-graph))
 (define g (add-node g 'C))
 (define g (add-node g 'B))
@@ -61,9 +64,9 @@
 (nodes g)
 (edges g)
 (neighbors g 'A)
-(adjacent? g 'A 'B)
-(adjacent? g 'B 'A)
-(adjacent? g 'D 'A)
+;(adjacent? g 'A 'B)
+;(adjacent? g 'B 'A)
+;(adjacent? g 'D 'A)
 (define g (remove-edge g 'A 'B))
 (display g)
 (newline)

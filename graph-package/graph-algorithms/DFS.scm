@@ -1,9 +1,68 @@
 
 ; Depth-first Search
 (load "../basic-data-types/set.scm")
-(load "./dijkstra.scm")
+(load "../basic-data-types/pair.scm")
 
+; --------------------------------------------------------------------------------------------------------------------------------------------
 
+; Placeholder for graph stuff
+
+(define (make-empty-graph) '())
+
+(define (add-node graph node)
+  (if (assoc node graph) graph
+      (cons (pair node (set-create-empty)) graph)))
+
+(define (remove-node graph node)
+  (cond ((null? graph) '())
+        ((equal? (first (car graph)) node) (cdr graph))
+        (else (cons (car graph) (remove-node (cdr graph) node)))))
+
+(define (add-edge graph node1 node2)
+  (if (null? graph) '()
+      (let* ((entry (car graph))
+             (node (first entry))
+             (neighbors (second entry)))
+        (if (equal? node node1)
+            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
+            (cons entry (add-edge (cdr graph) node1 node2))))))
+
+(define (remove-edge graph node1 node2)
+  (if (null? graph) '()
+      (let* ((entry (car graph))
+             (node (first entry))
+             (neighbors (second entry)))
+        (if (equal? node node1)
+            (cons (pair node (set-remove node2 neighbors)) (cdr graph))
+            (cons entry (remove-edge (cdr graph) node1 node2))))))
+
+(define (neighbors graph node)
+  (second (assoc node graph)))
+
+(define (nodes graph)
+  (map car graph))
+
+(define (edges graph)
+  (if (null? graph) '()
+      (let* ((entry (car graph))
+             (node (first entry))
+             (connected-nodes (second entry)))
+        (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
+
+(define g (make-empty-graph))
+(define g (add-node g 'C))
+(define g (add-node g 'B))
+(define g (add-node g 'A))
+(define g (add-edge g 'A 'B))
+(define g (add-edge g 'A 'C))
+(define g (add-edge g 'B 'A))
+(define g (add-edge g 'C 'B))
+(display g)
+
+(newline)
+(newline)
+
+; --------------------------------------------------------------------------------------------------------------------------------------------
 ; Firstly we can use stacks for this, one for the current stack and the other for the visited stacks
 ; First we create a stack with the total number of vertices in the graph
 ; Then we choose any vertex as the starting point of the transversal, and push it in the stack.
@@ -33,6 +92,11 @@
                                        (set-insert node visited)
                                        (neighbors graph node))))))
     (DFS-recursive start (set-create-empty))))
+; Test
+
+;(DFS g 'a)
+
+
 ; ------------------------------------------------------------------------------------------------------------------------------------------
 
 ; Now that DFS is applied, let's try to use it in regards to the certain algorithms it can be applied to
@@ -45,12 +109,12 @@
 ; Else if the current code has been visited, it ouputs a the visited set.
 ; It then goes on the next node and conducts recursion to see if the current vertex goes to the target vertex
 
-(define (DFS graph start target)
+(define (DFS-path graph start target)
   (letrec ((DFS-recursive (lambda (node visited)
                             (if (equal? node target)
                                 #t
                                 (if (set-member? node visited)
-                                    visited
+                                    #f
                                     (foldl (lambda (neighbour acc)
                                              (or acc (DFS-recursive neighbour (set-insert node visited))))
                                            #f
@@ -58,6 +122,10 @@
     (DFS-recursive start (set-create-empty))))
 
 
+; Test
+(display (DFS-path g 'A 'C))
+(newline)
+(newline)
 ; -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ; Now let's use DFS again to implement if the graph is acyclic or not
@@ -100,5 +168,53 @@
     (dfs-acyclic starting_vertex #f graph (set-create-empty))))
 
 
+;Test
+
+;(is-acyclic g)
+
+; -------------------------------------------------------------------------------------------------------------------------------
+
+; Now to check if the graph is connected or not, which will also be done through DFS
+; Original design plan
+; So we want to check if the graph is connected, which means that all the vertices are connected through one parent vertex
+; Honestly from all we've done so far this isn't diffuclt, we essentially can just run DFS, and calculate from this
+; We'll reimplement DFS, and then a helper function that checks the number of vertices in the graph
+; The point of that is to compare the visited elements of DFS with how many vertices there are in the graph
+; Then we create a function connect? that essentially started DFS on the first vertex.
+; Once that is done, it compares the visted vertices from DFS to the number of vertices in the graph
+; If the number of vertices are the same, we have a connected graph!
+
+; I was able to just replace some of the code with the abstract datatypes, which wasn't too hard to do
+
+(define (dfs-connected current visited graph)
+  (if (set-member? current visited)
+      visited
+      (let ((neighbors (neighbors graph current)))
+        (define (iter-connect nbrs)
+          (if (null? nbrs)
+              visited 
+              (let ((nbr (first nbrs)))
+                (if (not (set-member? nbr visited))
+                    (iter-connect (dfs-connected nbr (set-insert current visited) graph))
+                    (iter-connect (cdr nbrs))))))
+        (iter-connect neighbors))))
+
+(define (number-of-nodes graph)
+  (length (nodes graph)))
 
 
+(define (connected? graph)
+  (let* ((start-node (car (nodes graph)))
+         (visited (dfs-connected start-node (set-create-empty) graph)))
+    (= (number-of-nodes graph) (length visited))))
+
+;Test
+;(connected? g)
+
+; For the part that checks if it's an acyclic graph doesn't have to change at all, the data types are already under the hood
+
+(define (spanning? graph)
+  (and (is-acyclic graph) (connected? graph)))
+
+; Test
+(spanning? g)
