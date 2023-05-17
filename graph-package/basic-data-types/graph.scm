@@ -36,6 +36,22 @@
             (cons (pair node (set-insert node2 neighbors)) (cdr graph))
             (cons entry (add-edge (cdr graph) node1 node2))))))
 
+; Weighted graph
+; This is a temp implementation, we'll imporve the interface later
+
+(define (weighted-graph)
+  '())
+
+(define (add-weighted-edge graph node1 node2 weight)
+  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
+      graph
+      (let* ((entry (car graph))
+             (node (first entry))
+             (neighbors (second entry)))
+        (if (equal? node node1)
+            (cons (pair node (set-insert (pair node2 weight) neighbors)) (cdr graph))
+            (cons entry (add-weighted-edge (cdr graph) node1 node2 weight))))))
+
 
 (define (remove-edge graph node1 node2)
   (if (null? graph) '()
@@ -90,15 +106,29 @@
 ;(display g)
 (newline)
 
-(define dg (make-directed-graph))
-(define dg (add-node dg 'A))
-(define dg (add-node dg 'B))
-(define dg (add-node dg 'C))
-(define dg (add-node dg 'D))
-(define dg (add-node dg 'E))
-(define dg (add-node dg 'F))
-(define dg (add-directed-edge dg 'A 'B))
-(define dg (add-directed-edge dg 'C 'B))
-(define dg (add-directed-edge dg 'F 'B))
-(define dg (add-directed-edge dg 'D 'C))
-(display dg)
+;(define dg (make-directed-graph))
+;(define dg (add-node dg 'A))
+;(define dg (add-node dg 'B))
+;(define dg (add-node dg 'C))
+;(define dg (add-node dg 'D))
+;(define dg (add-node dg 'E))
+;(define dg (add-node dg 'F))
+;(define dg (add-directed-edge dg 'A 'B))
+;(define dg (add-directed-edge dg 'C 'B))
+;(define dg (add-directed-edge dg 'F 'B))
+;(define dg (add-directed-edge dg 'D 'C))
+;(display dg)
+
+(define wg (weighted-graph))
+(define wg (add-node wg 'A))
+(define wg (add-node wg 'B))
+(define wg (add-node wg 'C))
+(define wg (add-node wg 'D))
+(define wg (add-node wg 'E))
+(define wg (add-node wg 'F))
+
+(define wg (add-weighted-edge wg 'A 'B 1))
+(define wg (add-weighted-edge wg 'C 'B 3))
+(define wg (add-weighted-edge wg 'F 'B 5))
+(define wg (add-weighted-edge wg 'D 'C 9))
+(display wg)
