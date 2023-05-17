@@ -19,13 +19,15 @@
         (else (cons (car graph) (remove-node (cdr graph) node)))))
 
 (define (add-edge graph node1 node2)
-  (if (null? graph) '()
+  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
+      graph
       (let* ((entry (car graph))
              (node (first entry))
              (neighbors (second entry)))
         (if (equal? node node1)
             (cons (pair node (set-insert node2 neighbors)) (cdr graph))
             (cons entry (add-edge (cdr graph) node1 node2))))))
+
 
 (define (remove-edge graph node1 node2)
   (if (null? graph) '()
@@ -37,8 +39,15 @@
             (cons entry (remove-edge (cdr graph) node1 node2))))))
 
 (define (neighbors graph node)
-  (second (assoc node graph)))
-
+  (let ((node-assoc (assoc node graph)))
+    (if node-assoc
+        (second node-assoc)
+        '())))
+(define (adjacent? graph node1 node2)
+  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
+      #f
+      (let ((n (neighbors graph node1)))
+        (set-member? node2 n))))
 (define (nodes graph)
   (map car graph))
 
@@ -217,4 +226,31 @@
   (and (is-acyclic graph) (connected? graph)))
 
 ; Test
-(spanning? g)
+;(spanning? g)
+
+; Lastly we can use DFS to also gives us a spanning tree made from the graph;
+; I created this before for the more abstract version, let's try it again;
+; We now are using set-member? to check if the current vertex is in the visited set
+; We used first to get the first neighbor, without using car
+; set-insert is used to insert te current vertex into the visited set
+; Pair is used to pair the current vertex into a tree
+; Laslty set-empty-set creates an empty set for the tree
+
+(define (dfs-spanning-tree current visited tree graph)
+  (if (set-member? current visited)
+      tree
+      (let ((neighbors (neighbors graph current)))
+        (define (iter-tree nbrs)
+          (if (null? nbrs)
+              tree
+              (let ((nbr (first nbrs)))
+                (if (not (set-member? nbr visited))
+                    (iter-tree (dfs-spanning-tree nbr (set-insert current visited) (set-insert (list current nbr) tree) graph))
+                    (iter-tree (cdr nbrs))))))
+        (iter-tree neighbors))))
+
+(define (spanning-tree graph)
+  (let ((start-vertex (first (first (nodes graph)))))
+    (dfs-spanning-tree start-vertex (set-create-empty) (set-create-empty) graph)))
+
+(spanning-tree g)
