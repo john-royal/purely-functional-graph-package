@@ -95,6 +95,22 @@
 ; First let's implement the DFS helper function we need
 ; We need to slightlty modify the previous ones, not too much work for that
 
+; Design Plan/Proof
+
+; Base case: If the current vertex has been visited already, then it returns the current visited set and order.
+; If there are no vertices left to check in the iter function, it returns the current order.
+; Inductive Hypothesis (IH): Assume that the function dfs-topo-sort correctly visits all the vertices reachable from
+; the current vertex and updates the visited set and order accordingly. Assume that the function iter correctly performs
+; a topological sort of the remaining vertices given the current visited set and order.
+; Inductive Step (IS): For each vertex, if it hasn't been visited yet, the dfs-topo-sort function is called to visit the vertex
+; and all vertices reachable from it. The visited set and order are updated based on the result of the dfs-topo-sort function, and
+; the iter function is called on the remaining vertices.
+; Precondition: The topological-sort function takes a graph as an argument. The graph must be a valid data structure where nodes and
+; their neighbors can be fetched, and it must be a DAG (Directed Acyclic Graph), meaning there are no cycles.
+
+; dfs-topo-sort: This function performs a depth-first traversal of the graph from the current vertex. It updates the visited set and order
+; list based on the traversal. It iterates through the neighbors of the current vertex and recursively calls itself on each neighbor that hasn't been visited yet.
+
 (define (dfs-topo-sort current visited order graph)
   (if (set-member? current visited)
       (pair visited order)
@@ -109,6 +125,10 @@
                     (iter-connect (cdr nbrs) visited order)))))
         (iter-connect neighbors visited order))))
 
+;topological-sort: This function performs a topological sort of the graph. It initializes an empty set of visited nodes and an
+; empty list for the order. It then iterates through all the nodes in the graph, and for each node, it calls the dfs-topo-sort
+; function to visit the node and all nodes reachable from it.
+
 (define (topological-sort graph) ; the graph is the input value
   (letrec ((iter (lambda (vertices visited order) ; letrec helps us store a local function for iteration
       (if (null? vertices) ; if we run out of vertices to check, it returns us the visited vertices 
@@ -120,6 +140,8 @@
                   (iter (cdr vertices) (first result) (second result)))))))))
     (iter (nodes graph) (set-create-empty) '())))
 
+; Postcondition: The topological-sort function will return a list of nodes in topological order, meaning that for every directed edge from
+; node U to node V, U comes before V in the ordering. If the graph is not a DAG, the result will not be a valid topological order.
 
 ; Test
 (define dg (make-directed-graph))
