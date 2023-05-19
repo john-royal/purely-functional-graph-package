@@ -126,6 +126,17 @@
 
 ; Okay John I couldn't figure out Bipartite graphs, so I'm just gonna keep doing specifications with chatgpt until I get an algorithm for it
 
+; Design Idea/Proof
+
+; Base case: If there are no remaining nodes to visit, it returns true, indicating the graph is bipartite.
+; Inductive Hypothesis (IH): Assume that the function dfs-visit correctly checks if the current node and
+; its neighbors can be colored in a way that makes the graph bipartite.
+; Inductive Step (IS): For each node, it colors the node red (if it's not colored yet) and then checks
+; if its neighbors can be colored with the opposite color (blue) without conflict.
+; Precondition: The is-bipartite? function takes a graph as an argument. The graph must be a valid data structure where nodes and edges can be fetched.
+
+; color-node: This function colors a node in the graph. If the node is already in the graph, it replaces the old color with the new one.
+; If the node is not in the graph, it adds the node with the new color.
 (define (color-node graph node color)
   (let ((entry (assoc node graph)))
     (if entry
@@ -136,13 +147,16 @@
               (cons (cons node-data (cons color (cdr neighbors-set))) (cdr graph))
               (cons entry (color-node (cdr graph) node color))))
         graph)))
-
+; get-color: This function retrieves the color of a node in the graph.
 (define (get-color graph node)
   (let ((node-assoc (assoc node graph)))
     (if (and node-assoc (pair? (cdr node-assoc)))
         (car (cdr node-assoc))
         '())))
 
+; dfs-visit: This function uses a depth-first search (DFS) approach to color a node and its neighbors. It colors the node
+; with a given color, then recursively calls itself on its uncolored neighbors with the opposite color. If a neighbor has the
+; same color as the node, it returns #f, indicating that the graph is not bipartite.
 (define (dfs-visit graph node color)
   (let ((graph (color-node graph node color))
         (adj-nodes (neighbors graph node)))
@@ -154,7 +168,8 @@
                    ((equal? adj-color '()) 
                     (dfs-visit (color-node graph adj-node (if (equal? color 'red) 'blue 'red)) adj-node (if (equal? color 'red) 'blue 'red)))
                    (else (dfs-visit graph (cdr adj-nodes) color))))))))
-
+; is-bipartite?: This is the main function that checks whether the graph is bipartite or not. It starts by creating a list of nodes.
+; It then iteratively colors each node (if it's not colored yet) and checks if the graph can be colored in a bipartite manner using dfs-visit.
 (define (is-bipartite? graph)
   (let ((nodes-list (map car graph)))
     (let loop ((remaining-nodes nodes-list)
@@ -163,7 +178,8 @@
             ((not (dfs-visit colored-graph (car remaining-nodes) 'red)) #f)
             (else (loop (cdr remaining-nodes) (color-node colored-graph (car remaining-nodes) 'red)))))))
 
-
+; Postcondition: The is-bipartite? function will return a boolean value indicating whether the graph is bipartite or not.
+; If the graph is bipartite, it will return #t, otherwise, it will return #f.
 
 
 
