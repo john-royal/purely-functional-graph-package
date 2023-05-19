@@ -98,17 +98,33 @@
 ; Then we can keep doing that with different vertices and after compare them all and see which set is the biggest
 ; Possibly straight forward
 
-; This is used to substitue the max builty-function to find the max clique 
+;Base case: The base case is when the list of remaining nodes is empty. If there are no remaining nodes,
+;the current clique (which could be empty or contain some nodes) is returned.
+; IH: Assume that the function dfs correctly finds the maximal clique for a subset of the remaining nodes.
+; IS: For each remaining node, it is considered for addition to the current clique. If the addition of the
+; node to the clique forms a valid clique and increases its size, the node is added to the clique, and the
+; dfs function is called on the rest of the remaining nodes with the new clique. If not, the node is not added
+; to the clique, and the dfs function is called twice: once with the original clique and once with the new clique.
+; The larger of the two cliques returned by these calls is selected as the result.
+; This is used to substitue the max builty-function to find the max clique
+
+;Precondition: The maximal-clique function takes a graph with its nodes and edges defined.
+
+;max-lst: This function takes two lists x and y and a comparator function cmp. If the
+;comparator function returns true for x and y, x is returned; otherwise, y is returned.
 (define (max-lst x y cmp)
   (if (cmp x y) x y))
 
-; This function takes a predicate (boolean) and a lst, returs true for all elements of the list or false
+;every: This function takes a predicate function pred and a list lst and returns true if the predicate
+; is true for all elements of the list; otherwise, it returns false.
 (define (every pred lst)
   (cond ((null? lst) #t)
         ((pred (car lst)) (every pred (cdr lst)))
         (else #f)))
 
-
+;all-pairs-adjacent?: This function checks if all pairs of nodes in a given set are adjacent in a graph.
+;It returns true if all pairs are adjacent and false otherwise. The adjacency check is performed by taking
+;a node from the set and checking if it is adjacent to all other nodes in the set.
 (define (all-pairs-adjacent? graph nodes)
   (if (null? nodes)
       #t
@@ -117,9 +133,9 @@
         (and (every (lambda (n) (adjacent? graph node n)) rest-nodes)
              (all-pairs-adjacent? graph rest-nodes)))))
 
-; This function checks if all nodes in the graph are adjacient to each other. This is done by
-; checking if the first node is adjacient to every other node, then repeating the process
-; If all nodes are adjacient, they form a clique
+;maximal-clique: This function uses DFS to find the maximal clique in a graph.
+; It does this by recursively exploring all possible cliques and selecting the
+; largest one that meets the adjacency requirement.
 
 (define (maximal-clique graph)
   (letrec ((dfs (lambda (clique remaining)
@@ -140,6 +156,9 @@
 ; if the new clique isn't bigger than the current, we then run DFS two times to compare
 ; which clique is bigger.
 ; This processes until all possible cliques are found
+
+ ;Postcondition: The maximal-clique function returns the maximal clique in the graph, which is a
+; list of nodes where every two nodes are connected by an edge. If no such clique exists, it returns an empty list.
 
 ; Test
 (maximal-clique g)
