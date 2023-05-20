@@ -2,61 +2,12 @@
 ; Depth-first Search
 (load "../basic-data-types/set.scm")
 (load "../basic-data-types/pair.scm")
+(load "../basic-data-types/graph.scm")
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------
 
 ; Placeholder for graph stuff
 
-(define (make-empty-graph) '())
-
-(define (add-node graph node)
-  (if (assoc node graph) graph
-      (cons (pair node (set-create-empty)) graph)))
-
-(define (remove-node graph node)
-  (cond ((null? graph) '())
-        ((equal? (first (car graph)) node) (cdr graph))
-        (else (cons (car graph) (remove-node (cdr graph) node)))))
-
-(define (add-edge graph node1 node2)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-
-
-(define (remove-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-remove node2 neighbors)) (cdr graph))
-            (cons entry (remove-edge (cdr graph) node1 node2))))))
-
-(define (neighbors graph node)
-  (let ((node-assoc (assoc node graph)))
-    (if node-assoc
-        (second node-assoc)
-        '())))
-(define (adjacent? graph node1 node2)
-  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
-      #f
-      (let ((n (neighbors graph node1)))
-        (set-member? node2 n))))
-(define (nodes graph)
-  (map car graph))
-
-(define (edges graph)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (connected-nodes (second entry)))
-        (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
 
 (define g (make-empty-graph))
 (define g (add-node g 'C))
@@ -66,10 +17,10 @@
 (define g (add-edge g 'A 'C))
 (define g (add-edge g 'B 'A))
 (define g (add-edge g 'C 'B))
-(display g)
+;(display g)
 
-(newline)
-(newline)
+;(newline)
+;(newline)
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------
 ; Firstly we can use stacks for this, one for the current stack and the other for the visited stacks
@@ -92,6 +43,21 @@
       initial
       (foldl f (f (car lst) initial) (cdr lst))))
 
+(define (filter predicate sequence)
+  (cond ((null? sequence) '())
+        ((predicate (car sequence)) (cons (car sequence) (filter predicate (cdr sequence))))
+        (else (filter predicate (cdr sequence)))))
+
+(define (john-dfs graph start-node)
+  (let iter ((node start-node)
+             (visited (set-create-empty)))
+    (if (set-member? node visited)
+        visited
+        (foldl (lambda (neighbor visited-acc) (iter neighbor visited-acc))
+               (set-insert node visited)
+               (neighbors graph node)))))
+        
+
 (define (DFS graph start)
   (letrec ((DFS-recursive (lambda (node visited)
                             (if (set-member? node visited)
@@ -104,6 +70,7 @@
 ; Test
 
 ;(DFS g 'a)
+;(john-dfs g 'a)
 
 
 ; ------------------------------------------------------------------------------------------------------------------------------------------
@@ -146,9 +113,9 @@
 
 
 ; Test
-(display (DFS-path g 'A 'C))
-(newline)
-(newline)
+;(display (DFS-path g 'A 'C))
+;(newline)
+;(newline)
 ; -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ; Now let's use DFS again to implement if the graph is acyclic or not
@@ -254,21 +221,57 @@
 ; Pair is used to pair the current vertex into a tree
 ; Laslty set-empty-set creates an empty set for the tree
 
-(define (dfs-spanning-tree current visited tree graph)
-  (if (set-member? current visited)
-      tree
-      (let ((neighbors (neighbors graph current)))
-        (define (iter-tree nbrs)
-          (if (null? nbrs)
-              tree
-              (let ((nbr (first nbrs)))
-                (if (not (set-member? nbr visited))
-                    (iter-tree (dfs-spanning-tree nbr (set-insert current visited) (set-insert (list current nbr) tree) graph))
-                    (iter-tree (cdr nbrs))))))
-        (iter-tree neighbors))))
+;(define (dfs-spanning-tree current-node visited-nodes output-tree graph)
+ ; (if (set-member? current-node visited-nodes)
+  ;    output-tree
+   ;   (let iter ((neighbors (neighbors graph current-node)))
+    ;    (if (null? neighbors)
+     ;       output-tree
+      ;      (let ((first-neighbor (car neighbors))) ; logic error: first is for pairs; neighbors should be a set; using `car` temporarily instead; this should work if neighbors is non-null
+       ;       (if (set-member? first-neighbor visited-nodes)
+        ;          (iter (cdr neighbors))
+ ;                 (dfs-spanning-tree first-neighbor (set-insert current-node visited-nodes) (set-insert (list current-node first-neighbor) output-tree) graph)))))))
 
-(define (spanning-tree graph)
-  (let ((start-vertex (first (first (nodes graph)))))
-    (dfs-spanning-tree start-vertex (set-create-empty) (set-create-empty) graph)))
 
-(spanning-tree g)
+(define (add-edge-and-nodes graph node1 node2)
+  (add-edge (add-node (add-node graph node1) node2) node1 node2))
+
+(define (dfs-spanning-tree graph start-node)
+  (let dfs-visit ((node start-node)
+                  (parent #f)
+                  (spanning-tree (set-create-empty)))
+    (if (set-member? node (nodes spanning-tree))
+        spanning-tree
+        (foldl (lambda (neighbor spanning-tree-acc) (dfs-visit neighbor node spanning-tree-acc))
+               (if (not parent) spanning-tree (add-edge-and-nodes spanning-tree parent node))
+               (neighbors graph node)))))
+;(define (dfs-spanning-tree current visited tree graph)
+;  (if (set-member? current visited)
+;      tree
+;      (let ((neighbors (neighbors graph current)))
+;        (define (iter-tree nbrs)
+;          (if (null? nbrs)
+;              tree
+;              (let ((nbr (first nbrs)))
+;                (if (not (set-member? nbr visited))
+;                    (iter-tree (dfs-spanning-tree nbr (set-insert current visited) (set-insert (list current nbr) tree) graph))
+;                    (iter-tree (cdr nbrs))))))
+;        (iter-tree neighbors))))
+
+
+(define g1 (make-empty-graph))
+(define g1 (add-node g1 'a))
+(define g1 (add-node g1 'b))
+(define g1 (add-node g1 'c))
+(define g1 (add-node g1 'd))
+(define g1 (add-node g1 'e))
+(define g1 (add-edge g1 'a 'b))
+(define g1 (add-edge g1 'a 'c))
+(define g1 (add-edge g1 'b 'd))
+(define g1 (add-edge g1 'b 'e))
+(define g1 (add-edge g1 'c 'e))
+(display g1)
+(newline)
+(john-dfs g1 'a)
+(nodes g1)
+(dfs-spanning-tree g1 'a)

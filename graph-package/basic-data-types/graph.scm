@@ -1,134 +1,224 @@
-; basic-data-types/graph.scm
+(load "../basic-data-types/set.scm")
+(load "../basic-data-types/pair.scm")
+(load "../util.scm")
 
-(load "./set.scm")
-(load "./pair.scm")
+(define (make-node node) node)
+(define (make-labeled-node node label) (list node label))
+  
+(define (make-edge node1 node2 . weight)
+  (if (pair? node2) (cons node1 node2)
+      (cons node1 (cons node2 weight))))
+(define (edge-from edge)
+  (car edge))
+(define (edge-to edge)
+  (cadr edge))
+(define (is-weighted? edge)
+  (= (length edge) 3))
+(define (edge-to-weighted edge)
+  (if (is-weighted? edge) (cdr edge) (cadr edge)))
+(define (edge-from-weighted src dest)
+  (if (pair? dest) (cons src dest)
+      (list src dest)))
+(define (edge-weight edge)
+  (if (is-weighted? edge) (caddr edge) 1))
+(define (edge-includes? edge node)
+  (or (equal? (edge-from edge) node) (equal? (edge-to edge) node)))
+(define (edge-matches? edge1 edge2)
+  (and
+   (equal? (edge-from edge1) (edge-from edge2))
+   (equal? (edge-to edge1) (edge-to edge2))))
+(define (make-weighted-edge node1 node2 weight) (list node1 node2 weight))
 
-(define (make-empty-graph) '())
+(define (graph-base)
+  ; Returns an empty graph.
+  (define (make-empty-graph)
+    (pair (set-create-empty)
+          (set-create-empty)))
 
-(define (add-node graph node)
-  (if (assoc node graph) graph
+  ; Returns the set of all nodes in the graph.
+  (define (nodes graph)
+    (first graph))
+
+  ; Returns the set of all edges in the graph.
+  ; For unweighted graphs, edges are represented as a pair of two nodes, e.g. (a b).
+  ; For weighted graphs, edges are represented as the two nodes followed by their weight, e.g. (a b 1).
+  (define (edges graph)
+    (second graph))
+
+  ; Adds the given node to the graph, if it is not already present.
+  (define (add-node graph node)
+    (pair (set-insert node (nodes graph)) (edges graph)))
+
+  ; Removes the given node and all associated edges from the graph.
+  (define (remove-node graph node)
+    (pair (set-remove node (nodes graph))
+          (filter (lambda (edge) (not (edge-includes? edge node))) (edges graph))))
+
+  ; Returns the graph with the given edge inserted.
+  ; If the graph does not include the relevant nodes, returns the graph unchanged.
+  (define (add-edge graph edge)
+    (let ((nodes (nodes graph)))
+      (if (and (set-member? (edge-from edge) nodes) (set-member? (edge-to edge) nodes))
+          (pair nodes (set-insert edge (edges graph)))
+          graph)))
+
+  ; Returns the graph with the given edge removed.
+  (define (remove-edge graph edge1)
+    (pair (first graph)
+          (filter (lambda (edge2) (not (edge-matches? edge1 edge2))) (edges graph))))
+
+  ; Returns true if there is an edge connecting the two nodes in the given graph.
+  (define (adjacent? graph node1 node2)
+    (some (lambda (edge) (edge-matches? edge (make-edge node1 node2))) (edges graph)))
+
+  ; Given a graph and a specific node, returns the set of nodes that are connected to the given node.
+  ; For weighted graphs, nodes are represented as a pair containing the node itself and the weight of the associated edge.
+  (define (neighbors graph node)
+    (map edge-to-weighted (filter (lambda (edge) (equal? (edge-from edge) node)) (edges graph))))
+
+  (define (dispatch action)
+    (cond ((eq? action 'make-empty) make-empty-graph)
+          ((eq? action 'nodes) nodes)
+          ((eq? action 'edges) edges)
+          ((eq? action 'add-node) add-node)
+          ((eq? action 'remove-node) remove-node)
+          ((eq? action 'add-edge) add-edge)
+          ((eq? action 'remove-edge) remove-edge)
+          ((eq? action 'adjacent?) adjacent?)
+          ((eq? action 'neighbors) neighbors)))
+
+  dispatch)
+
+(define (graph-adjacency-list)
+  ; Returns an empty graph.
+  (define (make-empty-graph) '())
+
+  ; Returns the set of all nodes in the graph.
+  (define (nodes graph)
+    (map car graph))
+
+  ; Returns the set of all edges in the graph.
+  ; For unweighted graphs, edges are represented as a pair of two nodes, e.g. (a b).
+  ; For weighted graphs, edges are represented as the two nodes followed by their weight, e.g. (a b 1).
+  (define (edges graph)
+    (define (accumulator entry accumulated-edges)
+      (let* ((node (first entry))
+             (neighbors (second entry))
+             (entry-edges (map (lambda (neighbor) (edge-from-weighted node neighbor)) neighbors)))
+        (set-union entry-edges accumulated-edges)))
+    (accumulate accumulator (set-create-empty) graph))
+
+  ; Adds the given node to the graph, if it is not already present.
+  (define (add-node graph node)
+    (if (assoc node graph) graph
       (cons (pair node (set-create-empty)) graph)))
 
-(define (remove-node graph node)
-  (cond ((null? graph) '())
-        ((equal? (first (car graph)) node) (cdr graph))
-        (else (cons (car graph) (remove-node (cdr graph) node)))))
+  ; Removes the given node and all associated edges from the graph.
+  (define (remove-node graph node-to-remove)
+    (if (null? graph) '()
+        (let* ((entry (car graph))
+               (node (first entry))
+               (neighbors (second entry)))
+          (if (equal? node node-to-remove)
+              (remove-node (cdr graph) node-to-remove)
+              (cons (pair node (set-remove node-to-remove neighbors)) (remove-node (cdr graph) node-to-remove))))))
 
-(define (add-edge graph node1 node2)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-; For directed graphs
+  ; Adds the given edge to the graph.
+  (define (add-edge graph edge)
+    (if (null? graph) '()
+        (let* ((entry (car graph))
+               (node (first entry))
+               (neighbors (second entry)))
+          (if (equal? (edge-from edge) node)
+              (cons (pair node (set-insert (edge-to-weighted edge) neighbors)) (cdr graph))
+              (cons entry (add-edge (cdr graph) edge))))))
 
-(define (make-directed-graph)
-  '())
-(define (add-directed-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
+  ; Removes the given edge from the graph, if present.
+  ; Weights are not necessary (edges are matched based on their start and end node).
+  (define (remove-edge graph edge)
+    (if (null? graph) '()
+        (let* ((entry (car graph))
+               (node (first entry))
+               (neighbors (second entry)))
+          (if (equal? (edge-from edge) node)
+              (cons (pair node (set-remove (edge-to edge) neighbors)) (cdr graph))
+              (cons entry (remove-edge (cdr graph) edge))))))
 
-; Weighted graph
-; This is a temp implementation, we'll imporve the interface later
+  ; Returns true if there is an edge connecting the two nodes in the given graph.
+  (define (adjacent? graph node1 node2)
+    (some (lambda (edge) (edge-matches? edge (make-edge node1 node2))) (edges graph)))
 
-(define (weighted-graph)
-  '())
+  ; Given a graph and a specific node, returns the set of nodes that are connected to the given node.
+  ; For weighted graphs, nodes are represented as a pair containing the node itself and the weight of the associated edge.
+  (define (neighbors graph node)
+    (map edge-to-weighted (filter (lambda (edge) (equal? (edge-from edge) node)) (edges graph))))
 
-(define (add-weighted-edge graph node1 node2 weight)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert (pair node2 weight) neighbors)) (cdr graph))
-            (cons entry (add-weighted-edge (cdr graph) node1 node2 weight))))))
+  (define (dispatch action)
+    (cond ((eq? action 'make-empty) make-empty-graph)
+          ((eq? action 'nodes) nodes)
+          ((eq? action 'edges) edges)
+          ((eq? action 'add-node) add-node)
+          ((eq? action 'remove-node) remove-node)
+          ((eq? action 'add-edge) add-edge)
+          ((eq? action 'remove-edge) remove-edge)
+          ((eq? action 'adjacent?) adjacent?)
+          ((eq? action 'neighbors) neighbors)))
 
+  dispatch)
 
-(define (remove-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-remove node2 neighbors)) (cdr graph))
-            (cons entry (remove-edge (cdr graph) node1 node2))))))
+(define (graph-adjacency-matrix)
+  (define alphabet '(a b c d e f g h i j k l m n o p q r s t u v w x y z))
+  
+  ; Returns an empty graph.
+  (define (make-empty-graph) '())
 
-(define (neighbors graph node)
-  (let ((node-assoc (assoc node graph)))
-    (if node-assoc
-        (second node-assoc)
-        '())))
+  ; Returns the set of all nodes in the graph.
+  (define (nodes graph)
+    (define (slice count lst)
+      (if (zero? count) '()
+          (cons (car lst) (slice (- count 1) (cdr lst)))))
+    (slice (length graph) alphabet))
 
-(define (adjacent? graph node1 node2)
-  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
-      #f
-      (let ((n (neighbors graph node1)))
-        (set-member? node2 n))))
+  ; todo: implement the other functions, which will not be easy...
 
+  (define (dispatch action)
+    (cond ((eq? action 'make-empty) make-empty-graph)
+          ((eq? action 'nodes) nodes)
+          ((eq? action 'edges) edges)
+          ((eq? action 'add-node) add-node)
+          ((eq? action 'remove-node) remove-node)
+          ((eq? action 'add-edge) add-edge)
+          ((eq? action 'remove-edge) remove-edge)
+          ((eq? action 'adjacent?) adjacent?)
+          ((eq? action 'neighbors) neighbors)))
 
-(define (nodes graph)
-  (map car graph))
+  dispatch)
+  
 
-(define (edges graph)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (connected-nodes (second entry)))
-        (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
+(define (make-empty-graph) ((graph-dispatch 'make-empty)))
+(define (nodes graph) ((graph-dispatch 'nodes) graph))
+(define (edges graph) ((graph-dispatch 'edges) graph))
+(define (add-node graph node) ((graph-dispatch 'add-node) graph node))
+(define (remove-node graph node) ((graph-dispatch 'remove-node) graph node))
+(define (add-edge graph edge) ((graph-dispatch 'add-edge) graph edge))
+(define (remove-edge graph edge) ((graph-dispatch 'remove-edge) graph edge))
+(define (adjacent? graph node1 node2) ((graph-dispatch 'adjacent?) graph node1 node2))
+(define (neighbors graph node) ((graph-dispatch 'neighbors) graph node))
 
-(define (number-of-nodes graph)
-  (length (nodes graph)))
+(define graph-dispatch (graph-adjacency-list))
 
 (define g (make-empty-graph))
-(define g (add-node g 'C))
-(define g (add-node g 'B))
-(define g (add-node g 'A))
-(define g (add-edge g 'A 'B))
-(define g (add-edge g 'A 'C))
-;(display g)
-(newline)
-;(nodes g)
-;(edges g)
-;(neighbors g 'A)
-;(adjacent? g 'A 'B)
-;(adjacent? g 'B 'A)
-;(adjacent? g 'D 'A)
-;(define g (remove-edge g 'A 'B))
-;(display g)
-(newline)
-
-;(define dg (make-directed-graph))
-;(define dg (add-node dg 'A))
-;(define dg (add-node dg 'B))
-;(define dg (add-node dg 'C))
-;(define dg (add-node dg 'D))
-;(define dg (add-node dg 'E))
-;(define dg (add-node dg 'F))
-;(define dg (add-directed-edge dg 'A 'B))
-;(define dg (add-directed-edge dg 'C 'B))
-;(define dg (add-directed-edge dg 'F 'B))
-;(define dg (add-directed-edge dg 'D 'C))
-;(display dg)
-
-(define wg (weighted-graph))
-(define wg (add-node wg 'A))
-(define wg (add-node wg 'B))
-(define wg (add-node wg 'C))
-(define wg (add-node wg 'D))
-(define wg (add-node wg 'E))
-(define wg (add-node wg 'F))
-
-(define wg (add-weighted-edge wg 'A 'B 1))
-(define wg (add-weighted-edge wg 'C 'B 3))
-(define wg (add-weighted-edge wg 'F 'B 5))
-(define wg (add-weighted-edge wg 'D 'C 9))
-(display wg)
+(define g (add-node g 'a))
+(define g (add-node g 'b))
+(define g (add-node g 'c))
+(define g (add-node g 'd))
+(define g (add-edge g (make-edge 'a 'b 1)))
+(define g (add-edge g (make-edge 'a 'c 2)))
+(define g (add-edge g (make-edge 'b 'd 3)))
+(nodes g)
+(edges g)
+(adjacent? g 'a 'b)
+(adjacent? g 'a 'd)
+(neighbors g 'a)
+(define g (remove-edge g (make-edge 'b 'd)))
+(define g (remove-node g 'a))

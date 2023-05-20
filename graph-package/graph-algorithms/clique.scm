@@ -2,61 +2,8 @@
 
 (load "../basic-data-types/set.scm")
 (load "../basic-data-types/pair.scm")
-
-; --------------------------------------------------------------------------------------------------------------------------------------------
-
-; Placeholder for graph stuff
-
-(define (make-empty-graph) '())
-
-(define (add-node graph node)
-  (if (assoc node graph) graph
-      (cons (pair node (set-create-empty)) graph)))
-
-(define (remove-node graph node)
-  (cond ((null? graph) '())
-        ((equal? (first (car graph)) node) (cdr graph))
-        (else (cons (car graph) (remove-node (cdr graph) node)))))
-
-(define (add-edge graph node1 node2)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-
-
-(define (remove-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-remove node2 neighbors)) (cdr graph))
-            (cons entry (remove-edge (cdr graph) node1 node2))))))
-
-(define (neighbors graph node)
-  (let ((node-assoc (assoc node graph)))
-    (if node-assoc
-        (second node-assoc)
-        '())))
-(define (adjacent? graph node1 node2)
-  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
-      #f
-      (let ((n (neighbors graph node1)))
-        (set-member? node2 n))))
-(define (nodes graph)
-  (map car graph))
-
-(define (edges graph)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (connected-nodes (second entry)))
-        (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
+(load "../basic-data-types/abstract-graph.scm")
+(load "../util.scm")
 
 (define g (make-empty-graph))
 
@@ -67,24 +14,20 @@
 (define g (add-node g 'D))
 (define g (add-node g 'E))
 
-(define g (add-edge g 'A 'B))
-(define g (add-edge g 'A 'C))
-(define g (add-edge g 'B 'A))
-(define g (add-edge g 'B 'C))
-(define g (add-edge g 'B 'D))
-(define g (add-edge g 'C 'A))
-(define g (add-edge g 'C 'B))
-(define g (add-edge g 'C 'E))
-(define g (add-edge g 'D 'B))
-(define g (add-edge g 'D 'E))
-(define g (add-edge g 'E 'C))
-(define g (add-edge g 'E 'D))
+(define g (add-edge g (make-edge 'A 'B)))
+(define g (add-edge g (make-edge 'A 'C)))
+(define g (add-edge g (make-edge 'B 'A)))
+(define g (add-edge g (make-edge 'B 'C)))
+(define g (add-edge g (make-edge 'B 'D)))
+(define g (add-edge g (make-edge 'C 'A)))
+(define g (add-edge g (make-edge 'C 'B)))
+(define g (add-edge g (make-edge 'C 'E)))
+(define g (add-edge g (make-edge 'D 'B)))
+(define g (add-edge g (make-edge 'D 'E)))
+(define g (add-edge g (make-edge 'E 'C)))
+(define g (add-edge g (make-edge 'E 'D)))
 
 (display g)
-(newline)
-
-
-(newline)
 (newline)
 
 
@@ -110,45 +53,37 @@
 
 ;Precondition: The maximal-clique function takes a graph with its nodes and edges defined.
 
-;max-lst: This function takes two lists x and y and a comparator function cmp. If the
+;compare This function takes two items, x and y, and a comparator function cmp. If the
 ;comparator function returns true for x and y, x is returned; otherwise, y is returned.
-(define (max-lst x y cmp)
+(define (compare x y cmp)
   (if (cmp x y) x y))
-
-;every: This function takes a predicate function pred and a list lst and returns true if the predicate
-; is true for all elements of the list; otherwise, it returns false.
-(define (every pred lst)
-  (cond ((null? lst) #t)
-        ((pred (car lst)) (every pred (cdr lst)))
-        (else #f)))
 
 ;all-pairs-adjacent?: This function checks if all pairs of nodes in a given set are adjacent in a graph.
 ;It returns true if all pairs are adjacent and false otherwise. The adjacency check is performed by taking
 ;a node from the set and checking if it is adjacent to all other nodes in the set.
 (define (all-pairs-adjacent? graph nodes)
-  (if (null? nodes)
-      #t
-      (let ((node (car nodes))
-            (rest-nodes (cdr nodes)))
-        (and (every (lambda (n) (adjacent? graph node n)) rest-nodes)
-             (all-pairs-adjacent? graph rest-nodes)))))
+  (if (null? nodes) #t
+      (let ((node1 (car nodes))
+            (remaining-nodes (cdr nodes)))
+        (and (every (lambda (node2) (adjacent? graph node1 node2)) remaining-nodes)
+             (all-pairs-adjacent? graph remaining-nodes)))))
 
 ;maximal-clique: This function uses DFS to find the maximal clique in a graph.
 ; It does this by recursively exploring all possible cliques and selecting the
 ; largest one that meets the adjacency requirement.
 
 (define (maximal-clique graph)
-  (letrec ((dfs (lambda (clique remaining)
-                  (if (null? remaining)
-                      clique
-                      (let ((node (car remaining))
-                            (rest (cdr remaining)))
-                        (let ((new-clique (cons node clique)))
-                          (if (and (all-pairs-adjacent? graph new-clique)
-                                   (> (length new-clique) (length clique)))
-                              (dfs new-clique rest)
-                              (max-lst (dfs clique rest) (dfs new-clique rest) (lambda (x y) (> (length x) (length y)))))))))))
-    (dfs '() (nodes graph))))
+  (let dfs ((clique '())
+            (remaining-nodes (nodes graph)))
+    (if (null? remaining-nodes)
+        clique
+        (let* ((node (car remaining-nodes))
+               (rest (cdr remaining-nodes))
+               (new-clique (cons node clique)))
+          (if (all-pairs-adjacent? graph new-clique)
+              (dfs new-clique rest)
+              (compare (dfs clique rest) (dfs new-clique rest) (lambda (lst1 lst2) (> (length lst1) (length lst2)))))))))
+
 ; This function uses DFS, it has an empty clique and then the graph of adjacient nodes that haven't been added to the clique
 ; If there are node nodes left in the remaining, then there is a clique
 ; If there are nodes remaining, we take the first node, and test if it's a valid clique
@@ -161,7 +96,7 @@
 ; list of nodes where every two nodes are connected by an edge. If no such clique exists, it returns an empty list.
 
 ; Test
-(maximal-clique g)
+(maximal-clique g) ; (a b c d e)
 
 ; Let's goooooo it works finally 
 

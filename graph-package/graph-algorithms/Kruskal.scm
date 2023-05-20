@@ -1,96 +1,14 @@
 ; Kruskal Algorithm
 (load "../basic-data-types/set.scm")
 (load "../basic-data-types/pair.scm")
+(load "../basic-data-types/graph.scm")
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------
-
-; Placeholder for graph stuff
-(define (make-empty-graph) '())
-
-(define (add-node graph node)
-  (if (assoc node graph) graph
-      (cons (pair node (set-create-empty)) graph)))
-
-(define (remove-node graph node)
-  (cond ((null? graph) '())
-        ((equal? (first (car graph)) node) (cdr graph))
-        (else (cons (car graph) (remove-node (cdr graph) node)))))
-
-(define (add-edge graph node1 node2)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-; For directed graphs
-
-(define (make-directed-graph)
-  '())
-(define (add-directed-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-
-; Weighted graph
-; This is a temp implementation, we'll imporve the interface later
-
-(define (weighted-graph)
-  '())
-
-(define (add-weighted-edge graph node1 node2 weight)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert (pair node2 weight) neighbors)) (cdr graph))
-            (cons entry (add-weighted-edge (cdr graph) node1 node2 weight))))))
-
-
-(define (remove-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-remove node2 neighbors)) (cdr graph))
-            (cons entry (remove-edge (cdr graph) node1 node2))))))
-
-(define (neighbors graph node)
-  (let ((node-assoc (assoc node graph)))
-    (if node-assoc
-        (second node-assoc)
-        '())))
-
-(define (adjacent? graph node1 node2)
-  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
-      #f
-      (let ((n (neighbors graph node1)))
-        (set-member? node2 n))))
-
-
-(define (nodes graph)
-  (map car graph))
-
-(define (edges graph)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (connected-nodes (second entry)))
-        (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
 
 (define (number-of-nodes graph)
   (length (nodes graph)))
 
-(define wg (weighted-graph))
+(define wg (make-empty-graph))
 (define wg (add-node wg 'A))
 (define wg (add-node wg 'B))
 (define wg (add-node wg 'C))
@@ -98,10 +16,10 @@
 (define wg (add-node wg 'E))
 (define wg (add-node wg 'F))
 
-(define wg (add-weighted-edge wg 'A 'B 1))
-(define wg (add-weighted-edge wg 'C 'B 3))
-(define wg (add-weighted-edge wg 'F 'B 5))
-(define wg (add-weighted-edge wg 'D 'C 9))
+(define wg (add-edge wg (make-edge 'A 'B 1)))
+(define wg (add-edge wg (make-edge 'C 'B 3)))
+(define wg (add-edge wg (make-edge 'F 'B 5)))
+(define wg (add-edge wg (make-edge 'D 'C 9)))
 (display wg)
 (newline)
 (newline)
@@ -142,7 +60,7 @@
   (insertion-sort lst comparator))
 
 (define (edge-weight-comparator edge1 edge2)
-  (< (second (second edge1)) (second (second edge2))))
+  (< (edge-weight edge1) (edge-weight edge2)))
 
 ;(define edges (edges wg))
 ;(sort-list edges edge-weight-comparator)
@@ -192,19 +110,19 @@
   (let* ((edges (sort-list (edges graph) edge-weight-comparator))
          (nodes (nodes graph))
          (disjoint-set (map (lambda (node) (pair node node)) nodes)))
-   (define (kruskal-iter edges disjoint-set mst)
-  (if (null? edges)
-      mst
-      (let* ((edge (car edges))
-             (node1 (first edge))
-             (node2 (first (second edge)))
-             (root1 (find node1 disjoint-set))
-             (root2 (find node2 disjoint-set)))
-        (if (not (eq? root1 root2))
-            (kruskal-iter (cdr edges) 
-                          (union node1 node2 disjoint-set) 
-                          (cons edge mst))
-            (kruskal-iter (cdr edges) disjoint-set mst)))))
+    (define (kruskal-iter edges disjoint-set mst)
+      (if (null? edges)
+          mst
+          (let* ((edge (car edges))
+                 (node1 (edge-from edge))
+                 (node2 (edge-to edge))
+                 (root1 (find node1 disjoint-set))
+                 (root2 (find node2 disjoint-set)))
+            (if (not (eq? root1 root2))
+                (kruskal-iter (cdr edges) 
+                              (union node1 node2 disjoint-set) 
+                              (cons edge mst))
+                (kruskal-iter (cdr edges) disjoint-set mst)))))
 
     (kruskal-iter edges disjoint-set '())))
 
@@ -214,8 +132,25 @@
              (c ((a 4) (b 2) (d 1)))
              (d ((b 5) (c 1)))))
 
+(define wg2 (make-empty-graph))
+(define wg2 (add-node wg2 'a))
+(define wg2 (add-node wg2 'b))
+(define wg2 (add-node wg2 'c))
+(define wg2 (add-node wg2 'd))
+(define wg2 (add-edge wg2 (make-edge 'a 'b 1)))
+(define wg2 (add-edge wg2 (make-edge 'a 'c 4)))
+(define wg2 (add-edge wg2 (make-edge 'b 'a 1)))
+(define wg2 (add-edge wg2 (make-edge 'b 'c 2)))
+(define wg2 (add-edge wg2 (make-edge 'b 'd 5)))
+(define wg2 (add-edge wg2 (make-edge 'c 'a 4)))
+(define wg2 (add-edge wg2 (make-edge 'c 'b 2)))
+(define wg2 (add-edge wg2 (make-edge 'c 'd 1)))
+(define wg2 (add-edge wg2 (make-edge 'd 'b 5)))
+(define wg2 (add-edge wg2 (make-edge 'd 'c 1)))
 
-(kruskal wg2)
+
+
+(kruskal wg2) ; ((a (b 1)) (b (a 1)) (c (d 1)) (d (c 1)))
 
 ; I'm too tired to explain, but I had to modify the union function, because it didn't work with our implementation, maybe consider adopting this union data-type instead
 ; or creating this as a main data type too?
