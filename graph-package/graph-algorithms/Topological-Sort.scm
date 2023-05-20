@@ -2,79 +2,8 @@
 
 (load "../basic-data-types/set.scm")
 (load "../basic-data-types/pair.scm")
-
-; --------------------------------------------------------------------------------------------------------------------------------------------
-
-; Placeholder for graph stuff
-
-(define (make-empty-graph) '())
-
-(define (add-node graph node)
-  (if (assoc node graph) graph
-      (cons (pair node (set-create-empty)) graph)))
-
-(define (remove-node graph node)
-  (cond ((null? graph) '())
-        ((equal? (first (car graph)) node) (cdr graph))
-        (else (cons (car graph) (remove-node (cdr graph) node)))))
-
-(define (add-edge graph node1 node2)
-  (if (or (null? graph) (not (assoc node1 graph)) (not (assoc node2 graph)))
-      graph
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-; For directed graphs
-
-(define (make-directed-graph)
-  '())
-(define (add-directed-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-insert node2 neighbors)) (cdr graph))
-            (cons entry (add-edge (cdr graph) node1 node2))))))
-
-
-(define (remove-edge graph node1 node2)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (neighbors (second entry)))
-        (if (equal? node node1)
-            (cons (pair node (set-remove node2 neighbors)) (cdr graph))
-            (cons entry (remove-edge (cdr graph) node1 node2))))))
-
-(define (neighbors graph node)
-  (let ((node-assoc (assoc node graph)))
-    (if node-assoc
-        (second node-assoc)
-        '())))
-
-(define (adjacent? graph node1 node2)
-  (if (or (not (assoc node1 graph)) (not (assoc node2 graph)))
-      #f
-      (let ((n (neighbors graph node1)))
-        (set-member? node2 n))))
-
-
-(define (nodes graph)
-  (map car graph))
-
-(define (edges graph)
-  (if (null? graph) '()
-      (let* ((entry (car graph))
-             (node (first entry))
-             (connected-nodes (second entry)))
-        (set-union (map (lambda (node2) (pair node node2)) connected-nodes) (edges (cdr graph))))))
-
-(define (number-of-nodes graph)
-  (length (nodes graph)))
+(load "../basic-data-types/graph.scm")
+(load "../util.scm")
 
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -111,52 +40,53 @@
 ; dfs-topo-sort: This function performs a depth-first traversal of the graph from the current vertex. It updates the visited set and order
 ; list based on the traversal. It iterates through the neighbors of the current vertex and recursively calls itself on each neighbor that hasn't been visited yet.
 
-(define (dfs-topo-sort current visited order graph)
-  (if (set-member? current visited)
-      (pair visited order)
-      (let ((neighbors (neighbors graph current)))
-        (define (iter-connect nbrs visited order)
-          (if (null? nbrs)
-              (pair (set-insert current visited) (cons current order))  ;; Add current node to visited and order after visiting all neighbors
-              (let ((nbr (car nbrs)))
-                (if (not (set-member? nbr visited))
-                    (let ((result (dfs-topo-sort nbr (set-insert current visited) order graph)))
-                      (iter-connect (cdr nbrs) (first result) (second result)))  ;; Recursively visit neighbors
-                    (iter-connect (cdr nbrs) visited order)))))
-        (iter-connect neighbors visited order))))
+(define (dfs-topo-sort node graph sorted)
+  (if (set-member? node sorted)
+      sorted
+      (let iter-connect ((neighbors (neighbors graph node))
+                         (sorted sorted))
+        (if (null? neighbors)
+            (set-insert node sorted)  ;; Add current node to sorted after visiting all neighbors
+            (iter-connect (cdr neighbors) (dfs-topo-sort (car neighbors) graph sorted)))))) ;; Recursively visit neighbors
 
 ;topological-sort: This function performs a topological sort of the graph. It initializes an empty set of visited nodes and an
 ; empty list for the order. It then iterates through all the nodes in the graph, and for each node, it calls the dfs-topo-sort
 ; function to visit the node and all nodes reachable from it.
 
-(define (topological-sort graph) ; the graph is the input value
-  (letrec ((iter (lambda (vertices visited order) ; letrec helps us store a local function for iteration
-      (if (null? vertices) ; if we run out of vertices to check, it returns us the visited vertices 
-          order
-          (let ((vertex (car vertices)))
-            (if (set-member? vertex visited)
-                (iter (cdr vertices) visited order)
-                (let ((result (dfs-topo-sort vertex visited order graph)))
-                  (iter (cdr vertices) (first result) (second result)))))))))
-    (iter (nodes graph) (set-create-empty) '())))
+(define (topological-sort graph)
+  (let iter ((unvisited (nodes graph))
+             (sorted (set-create-empty)))
+    (if (null? unvisited) (reverse sorted)
+        (let* ((node (car unvisited))
+               (sorted (dfs-topo-sort node graph sorted)))
+          (iter (set-difference unvisited sorted)
+                sorted)))))
 
 ; Postcondition: The topological-sort function will return a list of nodes in topological order, meaning that for every directed edge from
 ; node U to node V, U comes before V in the ordering. If the graph is not a DAG, the result will not be a valid topological order.
 
+
+
+
+
 ; Test
-(define dg (make-directed-graph))
-(define dg (add-node dg 'A))
-(define dg (add-node dg 'B))
-(define dg (add-node dg 'C))
-(define dg (add-node dg 'D))
-(define dg (add-node dg 'E))
-(define dg (add-node dg 'F))
-(define dg (add-directed-edge dg 'A 'B))
-(define dg (add-directed-edge dg 'C 'B))
-(define dg (add-directed-edge dg 'F 'B))
-(define dg (add-directed-edge dg 'D 'C))
+(define dg (make-empty-graph))
+(define dg (add-node dg 0))
+(define dg (add-node dg 1))
+(define dg (add-node dg 2))
+(define dg (add-node dg 3))
+(define dg (add-node dg 4))
+(define dg (add-node dg 5))
+(define dg (add-node dg 6))
+(define dg (add-node dg 7))
+(define dg (add-edge dg (make-edge 0 1)))
+(define dg (add-edge dg (make-edge 0 4)))
+(define dg (add-edge dg (make-edge 1 3)))
+(define dg (add-edge dg (make-edge 1 5)))
+(define dg (add-edge dg (make-edge 1 6)))
+(define dg (add-edge dg (make-edge 2 6)))
+(define dg (add-edge dg (make-edge 5 7)))
 (display dg)
 (newline)
 (newline)
-(define sorted-nodes (topological-sort dg))
-(display sorted-nodes)
+(topological-sort dg)
