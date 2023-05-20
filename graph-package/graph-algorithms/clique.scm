@@ -33,25 +33,6 @@
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-; Okay so I learned the hardway that using my previous method won't work, so let's try again with DFS
-; This can actually work really well, when I thought it out
-; A clique is basically a group of connected edges, and we want to find biggest of that
-; How shall we do it?
-; Well we can use DFS go through one vertex and find all of the connected vertices with it, and label that
-; Then we can keep doing that with different vertices and after compare them all and see which set is the biggest
-; Possibly straight forward
-
-;Base case: The base case is when the list of remaining nodes is empty. If there are no remaining nodes,
-;the current clique (which could be empty or contain some nodes) is returned.
-; IH: Assume that the function dfs correctly finds the maximal clique for a subset of the remaining nodes.
-; IS: For each remaining node, it is considered for addition to the current clique. If the addition of the
-; node to the clique forms a valid clique and increases its size, the node is added to the clique, and the
-; dfs function is called on the rest of the remaining nodes with the new clique. If not, the node is not added
-; to the clique, and the dfs function is called twice: once with the original clique and once with the new clique.
-; The larger of the two cliques returned by these calls is selected as the result.
-; This is used to substitue the max builty-function to find the max clique
-
-;Precondition: The maximal-clique function takes a graph with its nodes and edges defined.
 
 ;compare This function takes two items, x and y, and a comparator function cmp. If the
 ;comparator function returns true for x and y, x is returned; otherwise, y is returned.
@@ -84,21 +65,10 @@
               (dfs new-clique rest)
               (compare (dfs clique rest) (dfs new-clique rest) (lambda (lst1 lst2) (> (length lst1) (length lst2)))))))))
 
-; This function uses DFS, it has an empty clique and then the graph of adjacient nodes that haven't been added to the clique
-; If there are node nodes left in the remaining, then there is a clique
-; If there are nodes remaining, we take the first node, and test if it's a valid clique
-; if it is bigger than our current clique, we fun the function all over again.
-; if the new clique isn't bigger than the current, we then run DFS two times to compare
-; which clique is bigger.
-; This processes until all possible cliques are found
-
- ;Postcondition: The maximal-clique function returns the maximal clique in the graph, which is a
-; list of nodes where every two nodes are connected by an edge. If no such clique exists, it returns an empty list.
 
 ; Test
 (maximal-clique g) ; (a b c d e)
 
-; Let's goooooo it works finally 
 
 
 
