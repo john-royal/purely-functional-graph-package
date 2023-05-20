@@ -83,3 +83,45 @@
 ; neighbors are checked and no cycle is found, the function returns #f.
 ; Precondition: The input graph is a valid graph.
 ; Postcondition: The function correctly identifies whether the graph is acyclic (#t) or not (#f).
+
+; ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Check if the graph is connected or not
+
+; Design Idea
+; So we want to check if the graph is connected, which means that all the vertices are connected through one parent vertex
+; Honestly from all we've done so far this isn't diffuclt, we essentially can just run DFS, and calculate from this
+; We'll reimplement DFS, and then a helper function that checks the number of vertices in the graph
+; The point of that is to compare the visited elements of DFS with how many vertices there are in the graph
+; Then we create a function connect? that essentially started DFS on the first vertex.
+; Once that is done, it compares the visted vertices from DFS to the number of vertices in the graph
+; If the number of vertices are the same, we have a connected graph!
+
+; Proof
+; Base Case: If the current vertex is already in the 'visited' set, the 'visited' set is returned as no further exploration is necessary.
+; Inductive Hypothesis (IH): Assumming the dfs-connected function correctly checks if the nodes explored are connected.
+; Inductive Step (IS): Consider an unvisited node n. Using DFS, we recursively explore all of the unvisited neighbors of n.
+; According to IH, the dfs-connected function will correctly check the connectivity of these nodes' sub-graphs. If all nodes are visited during
+; the traversal, the graph is connected.
+; Precondition: The input graph is a valid graph.
+;  Postcondition: The function correctly identifies whether the graph is connected (#t) or not (#f).
+
+; -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; Spanning tree
+
+; Design Plan
+; The DFS spanning-tree function starts at a given node in the graph, and tries to visit every node, only traversing edges to nodes that
+; haven't been visited. This is does by recursively calling the DFS function on each unvisited neighbor of the current node. It forms
+; the spanning tree by adding the edge from the current node to the visited neighbor node in the spanning tree. If all the nodes in the graph
+; are visited and are part of the spanning tree, the function returns the spanning tree.
+
+; Proof
+; Base Case: If the current node is already in the spanning-tree, the spanning-tree is returned as no further exploration is necessary.
+; Inductive Hypothesis (IH): Assumming the dfs-visit function correctly constructs the spanning tree for all nodes that have been explored.
+; Inductive Step (IS): Consider an unvisited node n. DFS, recursively explore all of the unvisited neighbors of n.
+; According to our IH, the dfs-visit function will correctly construct the spanning tree of these nodes' sub-graphs. The edges between the current
+; node and its unvisited neighbors are added to the spanning tree.
+; Precondition: The input graph is a valid graph, and start-node is a valid node in the graph.
+; Postcondition: The function correctly constructs and returns a spanning tree of the input graph.
+
