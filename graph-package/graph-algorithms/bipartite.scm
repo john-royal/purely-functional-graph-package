@@ -1,4 +1,4 @@
-; Bipartite graph
+; Determine if a graph is bipartite.
 
 (load "../basic-data-types/set.scm")
 (load "../basic-data-types/pair.scm")

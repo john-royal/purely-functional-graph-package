@@ -1,9 +1,9 @@
 ; Clique for a graph (Brute force)
 
-(load "../basic-data-types/set.scm")
-(load "../basic-data-types/pair.scm")
-(load "../basic-data-types/abstract-graph.scm")
-(load "../util.scm")
+(load "graph-package/basic-data-types/set.scm")
+(load "graph-package/basic-data-types/pair.scm")
+(load "graph-package/basic-data-types/graph.scm")
+(load "graph-package/util.scm")
 
 (define g (make-empty-graph))
 
@@ -67,9 +67,4 @@
 
 
 ; Test
-(maximal-clique g) ; (a b c d e)
-
-
-
-
-
+(display (maximal-clique g)) ; (a b c d e)

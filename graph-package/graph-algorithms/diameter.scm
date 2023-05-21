@@ -1,8 +1,7 @@
-; graph-algorithms/diameter.scm
+; Compute the diameter of a graph (brute force).
 
-
-(load "../basic-data-types/set.scm")
-(load "./dijkstra.scm")
+(load "graph-package/basic-data-types/set.scm")
+(load "graph-package/graph-algorithms/dijkstra.scm")
 
 ; Returns all paths in a graph, i.e. all possible combinations of nodes
 (define (all-paths graph)
@@ -32,5 +31,4 @@
 (define g (add-edge g (make-edge 'B 'C 2)))
 (define g (add-edge g (make-edge 'C 'D 2)))
 
-(diameter g) ; 5
-
+(display (diameter g)) ; 4

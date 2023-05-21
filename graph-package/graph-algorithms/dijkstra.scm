@@ -1,20 +1,8 @@
 ; graph-algorithms/dijkstra.scm
 
-
-(load "../basic-data-types/graph.scm")
-(load "../basic-data-types/pair.scm")
-(load "../util.scm")
-
-(define (insertion-sort lst less-than?)
-  (define (insert x sorted-lst)
-    (if (null? sorted-lst)
-        (list x)
-        (if (less-than? x (car sorted-lst))
-            (cons x sorted-lst)
-            (cons (car sorted-lst) (insert x (cdr sorted-lst))))))
-  (if (null? lst)
-      '()
-      (insert (car lst) (insertion-sort (cdr lst) less-than?))))
+(load "graph-package/basic-data-types/pair.scm")
+(load "graph-package/basic-data-types/graph.scm")
+(load "graph-package/util.scm")
 
 (define (find-first pred lst)
   (cond ((null? lst) #f)

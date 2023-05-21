@@ -1,7 +1,7 @@
 ; Kruskal Algorithm
-(load "../basic-data-types/set.scm")
-(load "../basic-data-types/pair.scm")
-(load "../basic-data-types/graph.scm")
+(load "graph-package/basic-data-types/set.scm")
+(load "graph-package/basic-data-types/pair.scm")
+(load "graph-package/basic-data-types/graph.scm")
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------
 

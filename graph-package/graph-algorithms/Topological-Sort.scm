@@ -1,14 +1,9 @@
 ; Topological Search
 
-(load "../basic-data-types/set.scm")
-(load "../basic-data-types/pair.scm")
-(load "../basic-data-types/graph.scm")
-(load "../util.scm")
-
-
-; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-; Let's try changing up topological sort now
+(load "graph-package/basic-data-types/set.scm")
+(load "graph-package/basic-data-types/pair.scm")
+(load "graph-package/basic-data-types/graph.scm")
+(load "graph-package/util.scm")
 
 (define (dfs-topo-sort node graph sorted)
   (if (set-member? node sorted)
@@ -22,7 +17,6 @@
 ;topological-sort: This function performs a topological sort of the graph. It initializes an empty set of visited nodes and an
 ; empty list for the order. It then iterates through all the nodes in the graph, and for each node, it calls the dfs-topo-sort
 ; function to visit the node and all nodes reachable from it.
-
 (define (topological-sort graph)
   (let iter ((unvisited (nodes graph))
              (sorted (set-create-empty)))
@@ -31,11 +25,6 @@
                (sorted (dfs-topo-sort node graph sorted)))
           (iter (set-difference unvisited sorted)
                 sorted)))))
-
-
-
-
-
 
 ; Test
 (define dg (make-empty-graph))
@@ -57,4 +46,4 @@
 (display dg)
 (newline)
 (newline)
-(topological-sort dg)
+(display (topological-sort dg)) ; (0 1 2 3 4 5 6 7)

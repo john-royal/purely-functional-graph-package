@@ -1,6 +1,6 @@
-(load "../basic-data-types/set.scm")
-(load "../basic-data-types/pair.scm")
-(load "../util.scm")
+(load "graph-package/basic-data-types/set.scm")
+(load "graph-package/basic-data-types/pair.scm")
+(load "graph-package/util.scm")
 
 (define (make-node node) node)
 (define (make-labeled-node node label) (list node label))
