@@ -2,6 +2,7 @@
 
 (load "graph-package/basic-data-types/set.scm")
 (load "graph-package/basic-data-types/pair.scm")
+(load "graph-package/basic-data-types/graph.scm")
 (load "graph-package/util.scm")
 
 ; restructuring the DFS
@@ -38,7 +39,7 @@
 (display g)
 (newline)
 (newline)
-(acyclic? g); should be #f, but is #t
+(display (acyclic? g)); should be #f, but is #t
 (newline)
 (newline)
 
@@ -55,7 +56,7 @@
 (display h)
 (newline)
 (newline)
-(acyclic? h)
+(display (acyclic? h))
 (newline)
 (newline)
 

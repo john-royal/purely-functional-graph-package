@@ -7,7 +7,7 @@
 (define (all-paths graph)
   (let ((nodes (nodes graph)))
     (let iter ((unchecked-nodes nodes)
-               (paths '()))
+               (paths (set-create-empty)))
       (if (null? unchecked-nodes) paths
           (iter (cdr unchecked-nodes) (set-union
                                        (map (lambda (node) (pair (car unchecked-nodes) node)) nodes)
