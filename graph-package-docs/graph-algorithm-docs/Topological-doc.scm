@@ -13,6 +13,10 @@
 
 ; First let's implement the DFS helper function we need
 ; We need to slightlty modify the previous ones, not too much work for that
+;topological-sort: This function performs a topological sort of the graph. It initializes an empty set of visited nodes and an
+; empty list for the order. It then iterates through all the nodes in the graph, and for each node, it calls the dfs-topo-sort
+; function to visit the node and all nodes reachable from it.
+
 
 ; Proof
 ; General Invariant
@@ -23,3 +27,8 @@
 ; edges to v from the vertices aren't yet sorted.
 ; If there are still unvisted nodes, each of the nodes don't have any upcoming edge from another unvisited node, which guarantees that
 ; at least one of these nodes can be chosen as the next node to visit, while stay acyclic.
+; Precondition: The topological-sort function takes a graph as an argument. The graph must be a valid data structure where nodes and
+; their neighbors can be fetched, and it must be a DAG (Directed Acyclic Graph), meaning there are no cycles.
+; Postcondition: The topological-sort function will return a list of nodes in topological order, meaning that for every directed edge from
+; node U to node V, U comes before V in the ordering. If the graph is not a DAG, the result will not be a valid topological order.
+

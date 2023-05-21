@@ -100,17 +100,6 @@
 
 ; -------------------------------------------------------------------------------------------------------------------------------
 
-; Now to check if the graph is connected or not, which will also be done through DFS
-; Original design plan
-; So we want to check if the graph is connected, which means that all the vertices are connected through one parent vertex
-; Honestly from all we've done so far this isn't diffuclt, we essentially can just run DFS, and calculate from this
-; We'll reimplement DFS, and then a helper function that checks the number of vertices in the graph
-; The point of that is to compare the visited elements of DFS with how many vertices there are in the graph
-; Then we create a function connect? that essentially started DFS on the first vertex.
-; Once that is done, it compares the visted vertices from DFS to the number of vertices in the graph
-; If the number of vertices are the same, we have a connected graph!
-
-; I was able to just replace some of the code with the abstract datatypes, which wasn't too hard to do
 
 (define (node-value node)
   (car node))
@@ -146,27 +135,6 @@
 (define (spanning? graph)
   (and (is-acyclic graph) (connected? graph)))
 
-; Test
-;(spanning? g)
-
-; Lastly we can use DFS to also gives us a spanning tree made from the graph;
-; I created this before for the more abstract version, let's try it again;
-; We now are using set-member? to check if the current vertex is in the visited set
-; We used first to get the first neighbor, without using car
-; set-insert is used to insert te current vertex into the visited set
-; Pair is used to pair the current vertex into a tree
-; Laslty set-empty-set creates an empty set for the tree
-
-;(define (dfs-spanning-tree current-node visited-nodes output-tree graph)
- ; (if (set-member? current-node visited-nodes)
-  ;    output-tree
-   ;   (let iter ((neighbors (neighbors graph current-node)))
-    ;    (if (null? neighbors)
-     ;       output-tree
-      ;      (let ((first-neighbor (car neighbors))) ; logic error: first is for pairs; neighbors should be a set; using `car` temporarily instead; this should work if neighbors is non-null
-       ;       (if (set-member? first-neighbor visited-nodes)
-        ;          (iter (cdr neighbors))
- ;                 (dfs-spanning-tree first-neighbor (set-insert current-node visited-nodes) (set-insert (list current-node first-neighbor) output-tree) graph)))))))
 
 
 (define (add-edge-and-nodes graph node1 node2)
@@ -181,19 +149,6 @@
         (foldl (lambda (neighbor spanning-tree-acc) (dfs-visit neighbor node spanning-tree-acc))
                (if (not parent) spanning-tree (add-edge-and-nodes spanning-tree parent node))
                (neighbors graph node)))))
-;(define (dfs-spanning-tree current visited tree graph)
-;  (if (set-member? current visited)
-;      tree
-;      (let ((neighbors (neighbors graph current)))
-;        (define (iter-tree nbrs)
-;          (if (null? nbrs)
-;              tree
-;              (let ((nbr (first nbrs)))
-;                (if (not (set-member? nbr visited))
-;                    (iter-tree (dfs-spanning-tree nbr (set-insert current visited) (set-insert (list current nbr) tree) graph))
-;                    (iter-tree (cdr nbrs))))))
-;        (iter-tree neighbors))))
-
 
 (define g1 (make-empty-graph))
 (define g1 (add-node g1 'a))

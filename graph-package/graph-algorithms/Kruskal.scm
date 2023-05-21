@@ -29,22 +29,6 @@
 
 ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-; Previous mumbojumbo
-
-; Actually we need to start this from scratch
-
-; Rough idea
-; First we need to sort all of our edges from the smallest weight to the highest
-; Then we start edging edges to a new set for the minimum spanning tree, from the smallest edge, in a way that it doesn't form a cycle
-; The nodes need to be connected for this to work.
-; We repeat this process until we form a tree with the smallest weight
-
-; First let's extract our edges
-; we have a data-type for that
-; (edges wg)
-
-; Now we can sort the edges.
-; we can just implement an insertion-sort algorithm
 (define (insertion-sort lst less-than?)
   (define (insert x sorted-lst)
     (if (null? sorted-lst)
@@ -62,8 +46,6 @@
 (define (edge-weight-comparator edge1 edge2)
   (< (edge-weight edge1) (edge-weight edge2)))
 
-;(define edges (edges wg))
-;(sort-list edges edge-weight-comparator)
 
 (define (filter pred lst)
   (cond ((null? lst) '())
@@ -151,13 +133,6 @@
 
 
 (kruskal wg2) ; ((a (b 1)) (b (a 1)) (c (d 1)) (d (c 1)))
-
-; I'm too tired to explain, but I had to modify the union function, because it didn't work with our implementation, maybe consider adopting this union data-type instead
-; or creating this as a main data type too?
-; We can also use find as a data-type, if you need I can clarify for you
-; We can aldo adopt edge-weight as a main data type
-; but this was extremely hard to redo, so idk my brain is fried, but this def probably needs work for abstraction
-; Will take any ideas you have lol
 
 
 
