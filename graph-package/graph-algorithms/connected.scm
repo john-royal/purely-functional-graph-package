@@ -1,5 +1,4 @@
 ; Determines if the graph is connected.
-; This doesn't work (infinite loop).
 
 (load "graph-package/basic-data-types/set.scm")
 (load "graph-package/basic-data-types/pair.scm")
@@ -7,17 +6,14 @@
 (load "graph-package/util.scm")
 
 (define (dfs-connected current visited graph)
-  (if (set-member? current visited)
-      visited
-      (let ((neighbors (neighbors graph current)))
-        (define (iter-connect nbrs)
-          (if (null? nbrs)
-              visited 
-              (let ((nbr (first nbrs)))
-                (if (not (set-member? nbr visited))
-                    (iter-connect (dfs-connected nbr (set-insert current visited) graph))
-                    (iter-connect (cdr nbrs))))))
-        (iter-connect neighbors))))
+  (let iter ((node current)
+             (visited visited))
+      (if (set-member? node visited)
+          visited
+          (accumulate (lambda (neighbor acc)
+                              (iter neighbor acc))
+                      (set-insert node visited)
+                      (neighbors graph node)))))
 
 
 (define (connected? graph)
